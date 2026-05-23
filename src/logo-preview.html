@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0f">
+    <title>Logo Preview — BovinoCheck</title>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..900&family=Geist+Mono:wght@400..700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Geist', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+        body { background: #0a0a0f; color: #e2e8f0; min-height: 100vh; padding: 2.5rem 1.5rem; }
+        body::before {
+            content: ""; position: fixed; inset: 0; z-index: -1;
+            background: radial-gradient(at 20% 30%, rgba(16,185,129,0.10) 0%, transparent 50%);
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        h1 { font-size: 2rem; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+        h1 span { background: linear-gradient(135deg, #10b981, #06b6d4); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .sub { color: #94a3b8; margin-bottom: 3rem; font-family: 'Geist Mono', monospace; font-size: 0.85rem; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        @media (min-width: 768px) { .grid { grid-template-columns: 1fr 1fr 1fr; } }
+        .option {
+            background: rgba(15,23,42,0.5);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+        .option:hover { border-color: rgba(16,185,129,0.4); transform: translateY(-4px); }
+        .opt-label {
+            font-family: 'Geist Mono', monospace; font-size: 0.7rem;
+            color: #10b981; text-transform: uppercase; letter-spacing: 0.15em;
+            margin-bottom: 0.5rem;
+        }
+        .opt-name { font-size: 1.25rem; font-weight: 800; margin-bottom: 0.25rem; }
+        .opt-desc { color: #94a3b8; font-size: 0.8rem; margin-bottom: 1.25rem; line-height: 1.5; }
+        .preview-large { aspect-ratio: 1; background: rgba(255,255,255,0.03); border-radius: 1.25rem; padding: 1.5rem; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
+        .preview-large img, .preview-large svg { max-width: 100%; height: auto; border-radius: 22%; }
+        .preview-row { display: flex; gap: 1rem; align-items: center; justify-content: space-around; padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 0.75rem; margin-bottom: 1rem; }
+        .preview-row > div { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+        .preview-row img, .preview-row svg { border-radius: 22%; }
+        .px-label { font-size: 0.6rem; color: #64748b; font-family: 'Geist Mono', monospace; }
+        .device-mock {
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            border-radius: 1rem; padding: 1.25rem 0.75rem 0.75rem;
+            display: grid; grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 0.6rem; align-items: center;
+        }
+        .device-mock > div { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+        .device-mock > div img, .device-mock > div svg { width: 44px; height: 44px; border-radius: 22%; }
+        .device-mock > div span { font-size: 0.55rem; color: #cbd5e1; text-align: center; }
+        .other-app {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            width: 44px; height: 44px; border-radius: 22%;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 900; font-size: 0.85rem;
+        }
+        .choose-btn {
+            display: block; width: 100%;
+            padding: 0.9rem 1.25rem;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            color: #0a0a0f; border: none; border-radius: 0.85rem;
+            font-family: 'Geist', sans-serif; font-weight: 800;
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em;
+            cursor: pointer; transition: all 0.2s; text-decoration: none; text-align: center;
+        }
+        .choose-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(16,185,129,0.4); }
+        nav a { color: #94a3b8; text-decoration: none; font-size: 0.85rem; padding: 0.4rem 0.8rem; border-radius: 0.5rem; background: rgba(255,255,255,0.04); margin-right: 0.5rem; }
+        nav a:hover { color: #10b981; }
+        nav { margin-bottom: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav><a href="./">← App</a></nav>
+        <h1>3 propuestas de <span>logo</span></h1>
+        <p class="sub">Compara, decide. La elegida va al APK definitivo · 22 may 2026</p>
+
+        <div class="grid">
+            <!-- OPCIÓN A -->
+            <div class="option">
+                <p class="opt-label">Opción A</p>
+                <h3 class="opt-name">Monogram tech</h3>
+                <p class="opt-desc">"BC" + gradient + accent. Estilo Linear / Vercel / startup tech. La más versátil y legible a tamaños pequeños.</p>
+
+                <div class="preview-large"><img src="icon-option-a.svg" alt="A" width="100%"></div>
+
+                <p class="opt-label">Multi-resolución</p>
+                <div class="preview-row">
+                    <div><img src="icon-option-a.svg" width="96"><span class="px-label">96px</span></div>
+                    <div><img src="icon-option-a.svg" width="48"><span class="px-label">48px</span></div>
+                    <div><img src="icon-option-a.svg" width="24"><span class="px-label">24px</span></div>
+                </div>
+
+                <p class="opt-label">En tu launcher Android</p>
+                <div class="device-mock">
+                    <div><img src="icon-option-a.svg"><span>BovinoCheck</span></div>
+                    <div><div class="other-app">WA</div><span>WhatsApp</span></div>
+                    <div><div class="other-app" style="background:linear-gradient(135deg,#f97316,#ef4444)">G</div><span>Gmail</span></div>
+                    <div><div class="other-app" style="background:linear-gradient(135deg,#10b981,#059669)">DR</div><span>Drive</span></div>
+                </div>
+            </div>
+
+            <!-- OPCIÓN B -->
+            <div class="option">
+                <p class="opt-label">Opción B</p>
+                <h3 class="opt-name">Cabeza bovina + pulso</h3>
+                <p class="opt-desc">Silueta geométrica de vaca con cuernos + onda de pulso vital. Temático veterinario, reconocible al instante.</p>
+
+                <div class="preview-large"><img src="icon-option-b.svg" alt="B" width="100%"></div>
+
+                <p class="opt-label">Multi-resolución</p>
+                <div class="preview-row">
+                    <div><img src="icon-option-b.svg" width="96"><span class="px-label">96px</span></div>
+                    <div><img src="icon-option-b.svg" width="48"><span class="px-label">48px</span></div>
+                    <div><img src="icon-option-b.svg" width="24"><span class="px-label">24px</span></div>
+                </div>
+
+                <p class="opt-label">En tu launcher Android</p>
+                <div class="device-mock">
+                    <div><img src="icon-option-b.svg"><span>BovinoCheck</span></div>
+                    <div><div class="other-app">WA</div><span>WhatsApp</span></div>
+                    <div><div class="other-app" style="background:linear-gradient(135deg,#f97316,#ef4444)">G</div><span>Gmail</span></div>
+                    <div><div class="other-app" style="background:linear-gradient(135deg,#10b981,#059669)">DR</div><span>Drive</span></div>
+                </div>
+            </div>
+
+            <!-- OPCIÓN C -->
+            <div class="option">
+                <p class="opt-label">Opción C</p>
+                <h3 class="opt-name">Pezuña bovina + AI</h3>
+                <p class="opt-desc">Huella de pezuña (símbolo clínico podológico, EXACTO al tema cojera) + anillo AI. Dark, profesional, único.</p>
+
+                <div class="preview-large"><img src="icon-option-c.svg" alt="C" width="100%"></div>
+
+                <p class="opt-label">Multi-resolución</p>
+                <div class="preview-row">
+                    <div><img src="icon-option-c.svg" width="96"><span class="px-label">96px</span></div>
+                    <div><img src="icon-option-c.svg" width="48"><span class="px-label">48px</span></div>
+                    <div><img src="icon-option-c.svg" width="24"><span class="px-label">24px</span></div>
+                </div>
+
+                <p class="opt-label">En tu launcher Android</p>
+                <div class="device-mock">
+                    <div><img src="icon-option-c.svg"><span>BovinoCheck</span></div>
+                    <div><div class="other-app">WA</div><span>WhatsApp</span></div>
+                    <div><div class="other-app" style="background:linear-gradient(135deg,#f97316,#ef4444)">G</div><span>Gmail</span></div>
+                    <div><div class="other-app" style="background:linear-gradient(135deg,#10b981,#059669)">DR</div><span>Drive</span></div>
+                </div>
+            </div>
+        </div>
+
+        <p style="text-align:center;color:#64748b;font-size:0.75rem;margin-top:3rem;font-family:'Geist Mono',monospace">
+            Avisa al asistente cuál te gusta (A · B · C) — la promociono a oficial + regenero PNGs + actualizo APK
+        </p>
+    </div>
+</body>
+</html>

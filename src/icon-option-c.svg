@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg-c" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="hoof-c" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <radialGradient id="glow-c" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg-c)"/>
+  <!-- soft glow behind hoof -->
+  <circle cx="256" cy="256" r="190" fill="url(#glow-c)"/>
+
+  <!-- Cloven hoof (bovine paw print) — two crescent moons forming a heart -->
+  <g fill="url(#hoof-c)" transform="translate(256 256)">
+    <!-- left claw -->
+    <path d="M -110 -120
+             C -150 -100, -160 -40, -130 20
+             C -110 60, -70 80, -40 70
+             C -20 50, -20 0, -40 -50
+             C -60 -100, -80 -130, -110 -120 Z"/>
+    <!-- right claw (mirror) -->
+    <path d="M 110 -120
+             C 150 -100, 160 -40, 130 20
+             C 110 60, 70 80, 40 70
+             C 20 50, 20 0, 40 -50
+             C 60 -100, 80 -130, 110 -120 Z"/>
+    <!-- separation line subtle -->
+    <rect x="-3" y="-130" width="6" height="220" fill="#0a0a0f" opacity="0.4" rx="3"/>
+  </g>
+
+  <!-- AI pulse ring around -->
+  <circle cx="256" cy="256" r="220" fill="none" stroke="#10b981" stroke-width="3" opacity="0.4" stroke-dasharray="10 8"/>
+  <circle cx="256" cy="256" r="220" fill="none" stroke="url(#hoof-c)" stroke-width="6" opacity="0.9"
+          stroke-dasharray="160 1400" transform="rotate(-90 256 256)"/>
+
+  <!-- "AI" mini text bottom -->
+  <text x="256" y="478" text-anchor="middle" fill="#10b981" font-family="Geist Mono, monospace" font-weight="700" font-size="34" letter-spacing="8">AI</text>
+</svg>

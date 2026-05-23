@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg-b" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#065f46"/>
+      <stop offset="100%" stop-color="#10b981"/>
+    </linearGradient>
+    <radialGradient id="glow-b" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg-b)"/>
+  <rect width="512" height="512" rx="116" fill="url(#glow-b)"/>
+
+  <!-- Stylized cattle head silhouette, geometric & symmetric -->
+  <g fill="#ffffff" transform="translate(256 280)">
+    <!-- horns (two curved triangles) -->
+    <path d="M -130 -60 Q -150 -110 -90 -100 Q -75 -80 -85 -50 Z" />
+    <path d="M  130 -60 Q  150 -110  90 -100 Q  75 -80  85 -50 Z" />
+    <!-- head/face: rounded rectangle with snout -->
+    <path d="M -110 -60
+             Q -110 -100 -60 -110
+             L 60 -110
+             Q 110 -100 110 -60
+             L 110 30
+             Q 110 80 60 90
+             L 50 95
+             Q 50 130 25 135
+             L -25 135
+             Q -50 130 -50 95
+             L -60 90
+             Q -110 80 -110 30 Z" />
+    <!-- eyes (cut-outs) -->
+    <circle cx="-46" cy="-30" r="14" fill="#065f46"/>
+    <circle cx=" 46" cy="-30" r="14" fill="#065f46"/>
+    <!-- eye highlights -->
+    <circle cx="-42" cy="-34" r="4" fill="#fff"/>
+    <circle cx=" 50" cy="-34" r="4" fill="#fff"/>
+    <!-- nostrils -->
+    <ellipse cx="-16" cy="80" rx="7" ry="5" fill="#065f46"/>
+    <ellipse cx=" 16" cy="80" rx="7" ry="5" fill="#065f46"/>
+  </g>
+
+  <!-- pulse indicator bottom -->
+  <g stroke="#fbbf24" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.95">
+    <path d="M 120 440 L 200 440 L 220 410 L 250 470 L 280 410 L 300 440 L 392 440"/>
+  </g>
+</svg>
