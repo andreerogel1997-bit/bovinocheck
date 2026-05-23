@@ -2,11 +2,11 @@
   "name": "BovinoCheck AI Pro",
   "short_name": "BovinoCheck",
   "description": "Evaluación automatizada de cojera bovina por análisis de video con IA (escala de Sprecher 1-5). Diseñado para Cebú tropical en El Oro, Ecuador.",
-  "start_url": "./v7.5.html",
+  "start_url": "./v8.0.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#f8fafc",
+  "background_color": "#0a0a0f",
   "theme_color": "#065f46",
   "lang": "es-EC",
   "categories": ["medical", "productivity", "agriculture"],
@@ -36,14 +36,14 @@
       "name": "Analizar vaca",
       "short_name": "Analizar",
       "description": "Comenzar análisis de cojera con cámara",
-      "url": "./v7.5.html?action=analyze",
+      "url": "./v8.0.html?action=analyze",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Estadísticas",
       "short_name": "Stats",
       "description": "Ver estado del hato",
-      "url": "./v7.5.html?action=stats",
+      "url": "./v8.0.html?action=stats",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
     }
   ]
