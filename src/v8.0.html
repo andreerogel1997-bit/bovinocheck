@@ -810,25 +810,75 @@
                 Cebu: 'Animal CEBÚ/BRAHMAN TROPICAL Bos indicus. CRÍTICO: la giba puede confundirse con arqueo dorsal. Usa la LÍNEA LUMBOSACRA (no toracolumbar) como referencia para back-arch. El ángulo de corvejón es naturalmente más cerrado.',
                 Mixto: 'Raza mixta o no tipificada. Cuidado con back-arch (posible componente Bos indicus).'
             }[breed] || '';
-            return `Eres veterinario podólogo experto en ganado tropical El Oro Ecuador. Evalúa cojera de vaca arete ${cowId} usando Sprecher 1-5.
+            return `Eres un veterinario podólogo experto en ganado tropical El Oro Ecuador. Evalúa la cojera de la vaca arete ${cowId} usando Sprecher 1-5.
 ${breedNote}
 
-Evalúa con detalle: 1) curvatura del lomo (estática y dinámica) 2) asimetría de paso y zancada 3) soporte de peso por extremidad 4) cabeceo compensatorio.
+INSTRUCCIONES DE CUANTIFICACIÓN ESTRICTA — devuelve TODOS los campos numéricos como ENTEROS 0-100, donde 0 = normal/perfecto y 100 = severidad máxima patológica.
 
-Responde estrictamente JSON:
-{"score": 1-5, "label": "string 3-6 palabras", "analysis": "string clínico 2-4 frases", "evidence": ["string", "string"], "recommendation": "pasos clínicos detallados", "confidence": "low|medium|high"}`;
+Analiza minuciosamente la imagen/video y estima:
+
+1) BIOMECÁNICA (6 dimensiones, 0-100):
+   - back_arch: curvatura/arqueo del lomo (0=plano, 100=arqueo extremo)
+   - head_bob: amplitud del cabeceo compensatorio
+   - stride_asymmetry: diferencia de longitud entre pasos
+   - tracking_ratio: desplazamiento de huella posterior vs anterior (0=tracking perfecto)
+   - stance_time: asimetría tiempo de apoyo (0=simétrico)
+   - speed_variance: variación de velocidad/fluidez (0=fluido)
+
+2) DESCARGA DE PESO POR EXTREMIDAD (0-100, donde 0=apoyo normal, 100=descarga total/no toca):
+   - LF: anterior izquierda
+   - RF: anterior derecha
+   - LH: posterior izquierda
+   - RH: posterior derecha
+
+3) primary_affected_limb: "LF" | "RF" | "LH" | "RH" | "none"
+4) confidence: entero 0-100 (tu certeza)
+5) evidence: array de 3-5 hallazgos visuales objetivos con su peso 0-100
+
+Devuelve EXCLUSIVAMENTE este JSON, sin texto extra:
+{
+  "score": 1-5,
+  "label": "string 3-6 palabras",
+  "analysis": "string clínico denso 3-5 frases",
+  "evidence": [{"observation": "string", "weight": 0-100}],
+  "recommendation": "pasos clínicos detallados",
+  "confidence": 0-100,
+  "biomechanics": {
+    "back_arch": 0-100, "head_bob": 0-100, "stride_asymmetry": 0-100,
+    "tracking_ratio": 0-100, "stance_time": 0-100, "speed_variance": 0-100
+  },
+  "limb_load": { "LF": 0-100, "RF": 0-100, "LH": 0-100, "RH": 0-100 },
+  "primary_affected_limb": "LF|RF|LH|RH|none"
+}`;
         }
+
+        // Charts holders per result (destroyed on rerender)
+        let chartRadar = null, chartLimbs = null;
 
         function renderResult(data) {
             const wq = data.score<=2 ? 0 : data.score<=4 ? 2 : 3;
             const wqLabel = { 0:'Sano', 2:'Cojo', 3:'Severa' }[wq];
-            const conf = data.confidence || 'medium';
+            const conf = typeof data.confidence === 'number' ? data.confidence : 50;
+            const confLabel = conf >= 75 ? 'Alta certeza' : conf >= 50 ? 'Certeza moderada' : 'Baja certeza · considere segunda evaluación';
+            const confColor = conf >= 75 ? '#10b981' : conf >= 50 ? '#fbbf24' : '#f43f5e';
+            const bio = data.biomechanics || {};
+            const limbs = data.limb_load || {};
+            const affected = data.primary_affected_limb || 'none';
+            const limbNames = { LF:'Ant. Izq.', RF:'Ant. Der.', LH:'Post. Izq.', RH:'Post. Der.' };
+
+            // Normalize evidence: support both old (string) and new (object) format
+            const ev = (data.evidence || []).map(e =>
+                typeof e === 'string' ? { observation: e, weight: 70 } : e
+            );
+
             const el = document.getElementById('result-section');
             el.classList.remove('hidden');
             el.innerHTML = `
                 <div class="glass rounded-3xl overflow-hidden">
+                    <!-- HERO -->
                     <div class="score-${data.score} p-6 text-white relative overflow-hidden">
                         <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+                        <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
                         <div class="relative flex items-start justify-between">
                             <div>
                                 <p class="text-[10px] mono uppercase tracking-widest opacity-80">${data.breed||'?'} · arete</p>
@@ -841,39 +891,177 @@ Responde estrictamente JSON:
                             </div>
                         </div>
                     </div>
+
+                    <!-- MEDIA -->
                     ${data.isVideo
                         ? `<video src="${data.image}" controls playsinline class="w-full aspect-video object-cover bg-black"></video>`
                         : `<img src="${data.image}" class="w-full aspect-video object-cover bg-black" alt="">`}
-                    <div class="p-5 space-y-4">
+
+                    <div class="p-5 space-y-5">
+                        <!-- BADGES -->
                         <div class="flex flex-wrap gap-2">
                             <span class="px-2.5 py-1 rounded-lg bg-white/5 text-[10px] font-bold mono border border-white/10">Sprecher G${data.score}</span>
                             <span class="px-2.5 py-1 rounded-lg bg-white/5 text-[10px] font-bold mono border border-white/10">WQ${wq} · ${wqLabel}</span>
-                            <span class="px-2.5 py-1 rounded-lg bg-white/5 text-[10px] font-bold mono border border-white/10 uppercase">conf ${conf}</span>
+                            ${affected !== 'none' ? `<span class="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-300 text-[10px] font-bold mono border border-rose-500/30 uppercase">extremidad afectada: ${limbNames[affected]||affected}</span>` : ''}
                         </div>
+
+                        <!-- ANÁLISIS NARRATIVO -->
                         <p class="text-sm text-slate-300 italic leading-relaxed">${data.analysis}</p>
-                        ${(data.evidence||[]).length ? `
-                            <div class="glass rounded-2xl p-4 border border-white/5">
-                                <p class="text-[10px] uppercase mono text-cyan-400 mb-2 tracking-widest">Evidencia visual</p>
-                                <ul class="space-y-1.5 text-xs text-slate-300">
-                                    ${data.evidence.map(e => `<li class="flex gap-2"><span class="text-cyan-400">▸</span>${e}</li>`).join('')}
-                                </ul>
-                            </div>` : ''}
-                        <div class="glass rounded-2xl p-4 border-l-2 border-emerald-400">
-                            <p class="text-[10px] uppercase mono text-emerald-400 mb-1 tracking-widest">Protocolo de salud</p>
-                            <p class="text-sm font-medium">${data.recommendation}</p>
+
+                        <!-- CONFIDENCE GAUGE -->
+                        <div class="glass rounded-2xl p-4 flex items-center gap-5 border border-white/5">
+                            <div class="relative w-24 h-24 flex-shrink-0 flex items-center justify-center">
+                                <svg width="96" height="96" class="-rotate-90">
+                                    <circle cx="48" cy="48" r="40" stroke="rgba(255,255,255,0.06)" stroke-width="7" fill="none"/>
+                                    <circle cx="48" cy="48" r="40" stroke="${confColor}" stroke-width="7" fill="none"
+                                        stroke-dasharray="${conf * 2.513}, 251.3" stroke-linecap="round"
+                                        style="transition: stroke-dasharray 1.5s cubic-bezier(0.16,1,0.3,1)"/>
+                                </svg>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                    <p class="text-2xl font-black mono" style="color:${confColor}">${conf}</p>
+                                    <p class="text-[8px] uppercase text-slate-500 mono tracking-wider">conf</p>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[10px] uppercase mono text-slate-500 tracking-widest mb-1">Confianza del modelo</p>
+                                <p class="text-sm font-bold mb-1">${confLabel}</p>
+                                <p class="text-[11px] text-slate-400">Basada en calidad del frame, claridad de los marcadores anatómicos y consistencia entre fotogramas.</p>
+                            </div>
                         </div>
+
+                        <!-- BIOMECÁNICA: RADAR + LIMB BARS -->
+                        ${Object.keys(bio).length ? `
+                            <div class="glass rounded-2xl p-4 border border-white/5">
+                                <p class="text-[10px] uppercase mono text-cyan-400 mb-3 tracking-widest flex items-center gap-2">
+                                    <i data-lucide="activity" class="w-3.5 h-3.5"></i> Análisis biomecánico
+                                </p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-[9px] text-slate-500 mono uppercase mb-2 text-center">6 dimensiones cinemáticas</p>
+                                        <div class="relative h-56"><canvas id="biomech-radar"></canvas></div>
+                                    </div>
+                                    <div>
+                                        <p class="text-[9px] text-slate-500 mono uppercase mb-2 text-center">Descarga por extremidad</p>
+                                        <div class="relative h-56"><canvas id="limb-bars"></canvas></div>
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-slate-500 italic mt-3 text-center">Valores 0-100. Bajo = normal · Alto = patológico. Estimaciones del modelo desde la imagen.</p>
+                            </div>` : ''}
+
+                        <!-- EVIDENCIA CON PESO -->
+                        ${ev.length ? `
+                            <div class="glass rounded-2xl p-4 border border-white/5">
+                                <p class="text-[10px] uppercase mono text-cyan-400 mb-3 tracking-widest flex items-center gap-2">
+                                    <i data-lucide="list-checks" class="w-3.5 h-3.5"></i> Evidencia visual ponderada
+                                </p>
+                                <div class="space-y-2.5">
+                                    ${ev.map(e => `
+                                        <div>
+                                            <div class="flex justify-between items-baseline mb-1">
+                                                <p class="text-xs text-slate-300 flex-1 pr-3">${e.observation}</p>
+                                                <span class="text-[10px] mono text-slate-400">${e.weight}</span>
+                                            </div>
+                                            <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
+                                                <div class="h-full rounded-full" style="width: ${e.weight}%; background: linear-gradient(90deg, #06b6d4, #10b981); transition: width 1s cubic-bezier(0.16,1,0.3,1)"></div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>` : ''}
+
+                        <!-- PROTOCOLO -->
+                        <div class="glass rounded-2xl p-4 border-l-2 border-emerald-400">
+                            <p class="text-[10px] uppercase mono text-emerald-400 mb-1 tracking-widest flex items-center gap-2">
+                                <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i> Protocolo de salud
+                            </p>
+                            <p class="text-sm font-medium leading-relaxed">${data.recommendation}</p>
+                        </div>
+
+                        <!-- ACTIONS -->
                         <div class="grid grid-cols-2 gap-2 pt-2">
                             <button onclick="downloadPDF('${data.cowId}', ${data.id}, event)" class="py-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold flex items-center justify-center gap-2 transition-all">
-                                <i data-lucide="file-down" class="w-4 h-4"></i> PDF
+                                <i data-lucide="file-down" class="w-4 h-4"></i> PDF técnico
                             </button>
                             <button onclick="resetAnalyzer()" class="py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-900 text-xs font-bold flex items-center justify-center gap-2 transition-all">
-                                <i data-lucide="plus" class="w-4 h-4"></i> Siguiente
+                                <i data-lucide="plus" class="w-4 h-4"></i> Siguiente vaca
                             </button>
                         </div>
                     </div>
                 </div>`;
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
             lucide.createIcons();
+
+            // Init biomechanics charts
+            if (chartRadar) { chartRadar.destroy(); chartRadar = null; }
+            if (chartLimbs) { chartLimbs.destroy(); chartLimbs = null; }
+
+            if (Object.keys(bio).length) {
+                const radarCtx = document.getElementById('biomech-radar');
+                if (radarCtx) {
+                    chartRadar = new Chart(radarCtx, {
+                        type: 'radar',
+                        data: {
+                            labels: ['Arqueo dorsal', 'Cabeceo', 'Asim. zancada', 'Tracking', 'T. apoyo', 'Velocidad'],
+                            datasets: [{
+                                label: 'Severidad 0-100',
+                                data: [bio.back_arch||0, bio.head_bob||0, bio.stride_asymmetry||0, bio.tracking_ratio||0, bio.stance_time||0, bio.speed_variance||0],
+                                backgroundColor: 'rgba(16, 185, 129, 0.18)',
+                                borderColor: '#10b981',
+                                pointBackgroundColor: '#10b981',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 1.5,
+                                pointRadius: 4,
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                r: {
+                                    min: 0, max: 100,
+                                    ticks: { stepSize: 25, color: 'rgba(148,163,184,0.4)', backdropColor: 'transparent', font: { size: 9, family: 'Geist Mono' } },
+                                    pointLabels: { color: '#cbd5e1', font: { size: 10, family: 'Geist', weight: '600' } },
+                                    grid: { color: 'rgba(255,255,255,0.06)' },
+                                    angleLines: { color: 'rgba(255,255,255,0.06)' }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                const limbCtx = document.getElementById('limb-bars');
+                if (limbCtx) {
+                    const limbColors = ['LF','RF','LH','RH'].map(k => {
+                        const v = limbs[k] || 0;
+                        return v >= 60 ? '#f43f5e' : v >= 40 ? '#fbbf24' : '#10b981';
+                    });
+                    chartLimbs = new Chart(limbCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Ant. Izq.', 'Ant. Der.', 'Post. Izq.', 'Post. Der.'],
+                            datasets: [{
+                                label: 'Descarga (0-100)',
+                                data: [limbs.LF||0, limbs.RF||0, limbs.LH||0, limbs.RH||0],
+                                backgroundColor: limbColors,
+                                borderRadius: 6,
+                                borderSkipped: false,
+                                barThickness: 26
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.parsed.x} / 100` } } },
+                            scales: {
+                                x: { min: 0, max: 100, ticks: { color: 'rgba(148,163,184,0.5)', font: { family: 'Geist Mono', size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                                y: { ticks: { color: '#cbd5e1', font: { family: 'Geist', size: 11, weight: '600' } }, grid: { display: false } }
+                            }
+                        }
+                    });
+                }
+            }
+
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function resetAnalyzer() {
@@ -886,55 +1074,202 @@ Responde estrictamente JSON:
         }
 
         // ============ PDF ============
-        function downloadPDF(cowId, id, ev) {
+        // Helper: espera a que las imágenes dentro de un elemento estén cargadas
+        async function waitForImages(el) {
+            const imgs = [...el.querySelectorAll('img')];
+            await Promise.all(imgs.map(img => {
+                if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                return new Promise(res => { img.onload = res; img.onerror = res; });
+            }));
+        }
+
+        async function downloadPDF(cowId, id, ev) {
             const data = analysisHistory.find(h => h.id === id);
-            if (!data) return;
+            if (!data) { toast('Registro no encontrado', 'error'); return; }
             const btn = ev.currentTarget;
             const orig = btn.innerHTML;
-            btn.innerHTML = '<span class="thinking-dot"></span> Generando...';
+            btn.innerHTML = '<span class="thinking-dot"></span><span class="thinking-dot"></span><span class="thinking-dot"></span> Generando…';
             btn.disabled = true;
-            const wrapper = document.createElement('div');
-            wrapper.style.cssText = 'position:absolute;left:0;top:0;width:800px;background:#fff;color:#000;padding:30px;font-family:Geist,system-ui,sans-serif;z-index:-9999';
-            const wq = data.score<=2 ? 0 : data.score<=4 ? 2 : 3;
-            wrapper.innerHTML = `
-                <div style="border-bottom:3px solid #065f46;padding-bottom:15px;margin-bottom:20px">
-                    <h1 style="color:#065f46;font-size:28px;margin:0;font-weight:900">BovinoCheck AI · Reporte Clínico</h1>
-                    <p style="color:#666;font-size:13px;margin:5px 0 0">Arete ${data.cowId} · ${data.breed} · ${data.timestampStr}</p>
-                </div>
-                <div style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:25px;border-radius:16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:start">
-                    <div>
-                        <p style="font-size:11px;opacity:0.8;margin:0">SPRECHER GRADO</p>
-                        <p style="font-size:64px;font-weight:900;margin:0;line-height:1">${data.score}</p>
-                        <p style="font-size:14px;font-weight:bold;margin-top:8px">${data.label}</p>
+
+            try {
+                const wq = data.score<=2 ? 0 : data.score<=4 ? 2 : 3;
+                const wqLabel = { 0:'Sano (no cojo)', 2:'Cojo', 3:'Cojera severa' }[wq];
+                const conf = typeof data.confidence === 'number' ? data.confidence : 50;
+                const bio = data.biomechanics || {};
+                const limbs = data.limb_load || {};
+                const affected = data.primary_affected_limb || 'none';
+                const limbNames = { LF:'Anterior Izquierda', RF:'Anterior Derecha', LH:'Posterior Izquierda', RH:'Posterior Derecha' };
+                const scoreColors = { 1:'#10b981', 2:'#fbbf24', 3:'#f97316', 4:'#ef4444', 5:'#a855f7' };
+                const scoreColor = scoreColors[data.score] || '#10b981';
+
+                const ev_ = (data.evidence || []).map(e =>
+                    typeof e === 'string' ? { observation: e, weight: 70 } : e
+                );
+
+                // Capture biomechanics charts as PNG si están renderizados en el resultado actual
+                let radarImg = '', limbsImg = '';
+                if (chartRadar) radarImg = chartRadar.toBase64Image();
+                if (chartLimbs) limbsImg = chartLimbs.toBase64Image();
+
+                // Wrapper: position fixed visible pero offscreen (left negativo) — esto SÍ renderiza
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = `
+                    position: absolute; top: 0; left: -10000px;
+                    width: 794px; min-height: 1123px;
+                    background: #ffffff; color: #1e293b;
+                    padding: 40px;
+                    font-family: 'Geist', 'Helvetica', system-ui, sans-serif;
+                    font-size: 12px; line-height: 1.5;
+                `;
+
+                // Biomechanics bars (rendered as HTML for crisp PDF, not just chart PNG)
+                const bioRows = ['back_arch','head_bob','stride_asymmetry','tracking_ratio','stance_time','speed_variance'].map(k => {
+                    const lbl = { back_arch:'Arqueo dorsal', head_bob:'Cabeceo compensatorio', stride_asymmetry:'Asimetría de zancada', tracking_ratio:'Tracking de huellas', stance_time:'Tiempo de apoyo', speed_variance:'Variación de velocidad' }[k];
+                    const v = bio[k] || 0;
+                    const c = v >= 60 ? '#ef4444' : v >= 40 ? '#fbbf24' : '#10b981';
+                    return `
+                        <div style="margin-bottom:8px">
+                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">
+                                <span style="color:#475569">${lbl}</span>
+                                <span style="font-family:'Geist Mono',monospace;color:${c};font-weight:bold">${v}</span>
+                            </div>
+                            <div style="background:#f1f5f9;height:7px;border-radius:4px;overflow:hidden">
+                                <div style="background:${c};height:100%;width:${v}%;border-radius:4px"></div>
+                            </div>
+                        </div>`;
+                }).join('');
+
+                const limbRows = ['LF','RF','LH','RH'].map(k => {
+                    const v = limbs[k] || 0;
+                    const c = v >= 60 ? '#ef4444' : v >= 40 ? '#fbbf24' : '#10b981';
+                    const isAffected = k === affected;
+                    return `
+                        <div style="margin-bottom:8px;${isAffected?'background:#fef2f2;padding:6px 8px;border-radius:6px;border-left:3px solid #ef4444':''}">
+                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">
+                                <span style="color:#475569;font-weight:${isAffected?'bold':'normal'}">${limbNames[k]} ${isAffected?'⚠':''}</span>
+                                <span style="font-family:'Geist Mono',monospace;color:${c};font-weight:bold">${v}/100</span>
+                            </div>
+                            <div style="background:#f1f5f9;height:7px;border-radius:4px;overflow:hidden">
+                                <div style="background:${c};height:100%;width:${v}%;border-radius:4px"></div>
+                            </div>
+                        </div>`;
+                }).join('');
+
+                wrapper.innerHTML = `
+                    <!-- HEADER -->
+                    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid ${scoreColor};padding-bottom:14px;margin-bottom:24px">
+                        <div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                                <div style="width:24px;height:24px;background:linear-gradient(135deg,#10b981,#06b6d4);border-radius:6px;display:inline-block"></div>
+                                <h1 style="color:#065f46;font-size:22px;margin:0;font-weight:900;letter-spacing:-0.02em">BovinoCheck AI · Reporte Clínico</h1>
+                            </div>
+                            <p style="color:#64748b;font-size:11px;margin:0;font-family:'Geist Mono',monospace">v8.0 agentic · UTMACH · El Oro Ecuador</p>
+                        </div>
+                        <div style="text-align:right;font-size:10px;color:#64748b;font-family:'Geist Mono',monospace">
+                            <p style="margin:0">${data.timestampStr || new Date(data.timestamp).toLocaleString('es-EC')}</p>
+                            <p style="margin:3px 0 0">ID: ${data.id || '—'}</p>
+                        </div>
                     </div>
-                    <div style="text-align:right">
-                        <p style="font-size:11px;opacity:0.8;margin:0">WELFARE QUALITY</p>
-                        <p style="font-size:24px;font-weight:bold;margin:0">WQ ${wq}</p>
+
+                    <!-- SCORE HERO -->
+                    <div style="background:linear-gradient(135deg,${scoreColor},${scoreColor}dd);color:#fff;padding:24px;border-radius:16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 20px ${scoreColor}40">
+                        <div>
+                            <p style="font-size:10px;opacity:0.85;margin:0;letter-spacing:0.15em;text-transform:uppercase">Arete · ${data.breed || 'sin tipificar'}</p>
+                            <p style="font-size:36px;font-weight:900;margin:4px 0 0;font-family:'Geist Mono',monospace;letter-spacing:-0.02em">${data.cowId}</p>
+                            <p style="font-size:13px;font-weight:bold;margin:10px 0 0">${data.label}</p>
+                        </div>
+                        <div style="text-align:right">
+                            <p style="font-size:10px;opacity:0.85;margin:0;letter-spacing:0.15em;text-transform:uppercase">Sprecher Grado</p>
+                            <p style="font-size:64px;font-weight:900;margin:0;line-height:1">${data.score}</p>
+                            <p style="font-size:11px;margin:6px 0 0;opacity:0.9">WQ ${wq} · ${wqLabel}</p>
+                        </div>
                     </div>
-                </div>
-                ${!data.isVideo ? `<img src="${data.image}" style="width:100%;border-radius:12px;margin-bottom:15px">` : ''}
-                <h3 style="color:#065f46;font-size:14px;margin:20px 0 8px">Análisis</h3>
-                <p style="font-size:12px;line-height:1.6;color:#333">${data.analysis}</p>
-                ${(data.evidence||[]).length ? `
-                    <h3 style="color:#065f46;font-size:14px;margin:20px 0 8px">Evidencia</h3>
-                    <ul style="font-size:12px;color:#333">${data.evidence.map(e=>`<li style="margin:4px 0">${e}</li>`).join('')}</ul>` : ''}
-                <h3 style="color:#065f46;font-size:14px;margin:20px 0 8px">Protocolo</h3>
-                <p style="font-size:12px;line-height:1.6;color:#333;background:#f0fdf4;padding:12px;border-radius:8px;border-left:3px solid #10b981">${data.recommendation}</p>
-                <p style="font-size:10px;color:#999;margin-top:30px;text-align:center;border-top:1px solid #eee;padding-top:15px">BovinoCheck AI Pro v8.0 · UTMACH · No reemplaza criterio clínico veterinario</p>
-            `;
-            document.body.appendChild(wrapper);
-            html2pdf().set({
-                margin: 10, filename: `BovinoCheck_${data.cowId}.pdf`,
-                image: { type:'jpeg', quality: 0.95 },
-                html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true },
-                jsPDF: { unit:'mm', format:'a4', orientation:'portrait' }
-            }).from(wrapper).save().then(() => {
+
+                    <!-- IMAGEN -->
+                    ${!data.isVideo ? `<img src="${data.image}" style="width:100%;max-height:300px;object-fit:contain;border-radius:12px;margin-bottom:20px;background:#000">` : '<div style="background:#1e293b;color:#fff;padding:30px;border-radius:12px;margin-bottom:20px;text-align:center;font-size:11px">📹 Video clip · ver app para reproducción</div>'}
+
+                    <!-- ANÁLISIS NARRATIVO -->
+                    <h3 style="color:${scoreColor};font-size:13px;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.12em;font-weight:800">Análisis clínico</h3>
+                    <p style="font-size:11.5px;line-height:1.65;color:#1e293b;margin:0 0 20px;font-style:italic">${data.analysis}</p>
+
+                    <!-- CONFIDENCE -->
+                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:20px;display:flex;align-items:center;gap:16px">
+                        <div style="width:60px;text-align:center">
+                            <p style="font-size:28px;font-weight:900;margin:0;color:${conf>=75?'#10b981':conf>=50?'#fbbf24':'#ef4444'};font-family:'Geist Mono',monospace">${conf}</p>
+                            <p style="font-size:9px;color:#64748b;margin:0;text-transform:uppercase;letter-spacing:0.1em">Confianza</p>
+                        </div>
+                        <div style="flex:1;border-left:2px solid #e2e8f0;padding-left:14px">
+                            <p style="font-size:11px;font-weight:bold;color:#1e293b;margin:0 0 3px">${conf>=75?'Alta certeza diagnóstica':conf>=50?'Certeza moderada':'Baja certeza · considere segunda evaluación'}</p>
+                            <p style="font-size:10px;color:#475569;margin:0">Score basado en calidad de captura y consistencia de marcadores anatómicos.</p>
+                        </div>
+                    </div>
+
+                    <!-- BIOMECHANICS GRID -->
+                    ${Object.keys(bio).length ? `
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+                        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px">
+                            <h4 style="font-size:11px;color:${scoreColor};margin:0 0 10px;text-transform:uppercase;letter-spacing:0.12em;font-weight:800">Biomecánica · 6 dimensiones</h4>
+                            ${bioRows}
+                        </div>
+                        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px">
+                            <h4 style="font-size:11px;color:${scoreColor};margin:0 0 10px;text-transform:uppercase;letter-spacing:0.12em;font-weight:800">Descarga por extremidad</h4>
+                            ${limbRows}
+                            ${affected !== 'none' ? `<p style="font-size:10px;color:#ef4444;font-weight:bold;margin:8px 0 0;background:#fef2f2;padding:6px;border-radius:6px">⚠ Extremidad afectada: ${limbNames[affected]||affected}</p>` : ''}
+                        </div>
+                    </div>` : ''}
+
+                    <!-- EVIDENCIA -->
+                    ${ev_.length ? `
+                    <div style="margin-bottom:20px">
+                        <h3 style="color:${scoreColor};font-size:13px;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.12em;font-weight:800">Evidencia visual ponderada</h3>
+                        ${ev_.map(e => `
+                            <div style="margin-bottom:8px">
+                                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+                                    <span style="color:#1e293b;flex:1;padding-right:10px">▸ ${e.observation}</span>
+                                    <span style="font-family:'Geist Mono',monospace;color:#475569;font-weight:bold">${e.weight}</span>
+                                </div>
+                                <div style="background:#f1f5f9;height:5px;border-radius:3px;overflow:hidden">
+                                    <div style="background:linear-gradient(90deg,#06b6d4,#10b981);height:100%;width:${e.weight}%;border-radius:3px"></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>` : ''}
+
+                    <!-- PROTOCOLO -->
+                    <h3 style="color:${scoreColor};font-size:13px;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.12em;font-weight:800">Protocolo recomendado</h3>
+                    <p style="font-size:11.5px;line-height:1.65;color:#1e293b;background:#f0fdf4;padding:14px;border-radius:10px;border-left:4px solid #10b981;margin:0 0 20px">${data.recommendation}</p>
+
+                    <!-- FOOTER -->
+                    <div style="border-top:1px solid #e2e8f0;padding-top:14px;margin-top:30px;display:flex;justify-content:space-between;font-size:9px;color:#94a3b8;font-family:'Geist Mono',monospace">
+                        <p style="margin:0">BovinoCheck AI Pro v8.0 · Sprecher 1997 + ajustes Bos indicus 2026</p>
+                        <p style="margin:0">github.com/andreerogel1997-bit/bovinocheck</p>
+                    </div>
+                    <p style="font-size:9px;color:#94a3b8;text-align:center;margin:6px 0 0;font-style:italic">⚠ Decisión clínica final responsabilidad del MVZ. Este reporte es soporte a la decisión, no diagnóstico definitivo.</p>
+                `;
+
+                document.body.appendChild(wrapper);
+                await waitForImages(wrapper);
+                await new Promise(r => setTimeout(r, 250)); // fonts settle
+
+                await html2pdf().set({
+                    margin: [10, 10, 12, 10],
+                    filename: `BovinoCheck_${data.cowId}_G${data.score}_${new Date(data.timestamp).toISOString().slice(0,10)}.pdf`,
+                    image: { type: 'jpeg', quality: 0.95 },
+                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0, windowWidth: 794 },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait', compress: true },
+                    pagebreak: { mode: ['avoid-all', 'css'] }
+                }).from(wrapper).save();
+
                 document.body.removeChild(wrapper);
+                toast('✓ PDF generado', 'success');
+            } catch (e) {
+                console.error(e);
+                toast('Error PDF: ' + e.message, 'error', 5000);
+            } finally {
                 btn.innerHTML = orig;
                 btn.disabled = false;
                 lucide.createIcons();
-                toast('PDF descargado', 'success');
-            });
+            }
         }
 
         function downloadFullReport(ev) {
@@ -971,19 +1306,29 @@ Responde estrictamente JSON:
             }
             html += `<p style="font-size:10px;color:#999;margin-top:30px;text-align:center;border-top:1px solid #eee;padding-top:15px">BovinoCheck AI Pro v8.0 · UTMACH</p>`;
             wrapper.innerHTML = html;
+            wrapper.style.cssText = 'position:absolute;top:0;left:-10000px;width:794px;background:#fff;color:#1e293b;padding:40px;font-family:Geist,system-ui,sans-serif;font-size:12px;line-height:1.5';
             document.body.appendChild(wrapper);
-            html2pdf().set({
-                margin: 10, filename: `BovinoCheck_Hato_${new Date().toISOString().slice(0,10)}.pdf`,
-                image: { type:'jpeg', quality: 0.95 },
-                html2canvas: { scale: 2, backgroundColor: '#ffffff' },
-                jsPDF: { unit:'mm', format:'a4', orientation:'portrait' }
-            }).from(wrapper).save().then(() => {
-                document.body.removeChild(wrapper);
-                btn.innerHTML = orig;
-                btn.disabled = false;
-                lucide.createIcons();
-                toast('Reporte descargado', 'success');
-            });
+            (async () => {
+                await waitForImages(wrapper);
+                await new Promise(r => setTimeout(r, 250));
+                try {
+                    await html2pdf().set({
+                        margin: [10, 10, 12, 10],
+                        filename: `BovinoCheck_Hato_${new Date().toISOString().slice(0,10)}.pdf`,
+                        image: { type:'jpeg', quality: 0.95 },
+                        html2canvas: { scale: 2, backgroundColor: '#ffffff', scrollY: 0, windowWidth: 794, useCORS: true },
+                        jsPDF: { unit:'mm', format:'a4', orientation:'portrait', compress: true }
+                    }).from(wrapper).save();
+                    toast('✓ Reporte descargado', 'success');
+                } catch (e) {
+                    toast('Error PDF: ' + e.message, 'error', 5000);
+                } finally {
+                    document.body.removeChild(wrapper);
+                    btn.innerHTML = orig;
+                    btn.disabled = false;
+                    lucide.createIcons();
+                }
+            })();
         }
 
         // ============ STATS RENDER ============
