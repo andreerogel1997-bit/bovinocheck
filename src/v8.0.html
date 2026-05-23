@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a0f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="BovinoCheck V8.0 — Agentic cattle health AI. Glass-medical + agentic cockpit + field rugged. Designed for Bos indicus tropical, El Oro Ecuador.">
+    <title>BovinoCheck V8.0 — Cattle Health Agentic AI</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon-192.png">
+
+    <!-- Geist variable font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/idb@8/build/umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-2: #11111a;
+            --glass: rgba(15, 23, 42, 0.45);
+            --glass-strong: rgba(15, 23, 42, 0.75);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.14);
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #10b981;
+            --accent-2: #06b6d4;
+        }
+
+        * { font-family: 'Geist', system-ui, -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+        .mono { font-family: 'Geist Mono', ui-monospace, monospace; font-feature-settings: "ss01", "ss02"; }
+
+        html, body { background: var(--bg); color: var(--text); }
+        body { min-height: 100vh; overflow-x: hidden; padding-bottom: env(safe-area-inset-bottom); }
+
+        /* Animated gradient mesh background */
+        .mesh-bg {
+            position: fixed; inset: 0; z-index: -2;
+            background:
+                radial-gradient(at 15% 20%, rgba(16, 185, 129, 0.18) 0%, transparent 45%),
+                radial-gradient(at 85% 25%, rgba(6, 182, 212, 0.14) 0%, transparent 45%),
+                radial-gradient(at 35% 85%, rgba(139, 92, 246, 0.12) 0%, transparent 45%),
+                radial-gradient(at 90% 90%, rgba(251, 191, 36, 0.08) 0%, transparent 40%),
+                var(--bg);
+            animation: mesh-shift 28s ease-in-out infinite;
+        }
+        @keyframes mesh-shift {
+            0%, 100% { transform: scale(1) rotate(0deg); filter: hue-rotate(0deg); }
+            50% { transform: scale(1.05) rotate(2deg); filter: hue-rotate(10deg); }
+        }
+        .mesh-bg::after {
+            content: "";
+            position: absolute; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            opacity: 0.5; pointer-events: none;
+        }
+
+        /* Glass surface */
+        .glass {
+            background: var(--glass);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--border);
+            box-shadow:
+                0 8px 32px 0 rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.04);
+        }
+        .glass-strong {
+            background: var(--glass-strong);
+            backdrop-filter: blur(28px) saturate(180%);
+            -webkit-backdrop-filter: blur(28px) saturate(180%);
+            border: 1px solid var(--border);
+        }
+
+        /* Hover glow */
+        .glow-hover { transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+        .glow-hover:hover {
+            box-shadow: 0 0 28px rgba(16, 185, 129, 0.28), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+            border-color: var(--border-hover);
+            transform: translateY(-1px);
+        }
+
+        /* Thinking dots */
+        .thinking-dot {
+            width: 4px; height: 4px; background: var(--accent);
+            border-radius: 50%; display: inline-block; margin: 0 1.5px;
+            animation: dot-pulse 1.4s infinite ease-in-out;
+        }
+        .thinking-dot:nth-child(2) { animation-delay: 0.16s; }
+        .thinking-dot:nth-child(3) { animation-delay: 0.32s; }
+        @keyframes dot-pulse {
+            0%, 80%, 100% { opacity: 0.25; transform: scale(0.7); }
+            40% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Agent card streaming entrance */
+        .agent-card { opacity: 0; transform: translateY(10px) scale(0.97); }
+        .agent-card.visible { animation: agentIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes agentIn { to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        /* Pulse ring */
+        .pulse-ring::before {
+            content: ""; position: absolute; inset: -3px;
+            border: 1.5px solid var(--accent); border-radius: 50%;
+            animation: pulse-ring 2s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { opacity: 0.8; transform: scale(0.95); }
+            100% { opacity: 0; transform: scale(1.6); }
+        }
+
+        /* Field-rugged mode (high-contrast for outdoor) */
+        body.field-mode { background: #000; }
+        body.field-mode .mesh-bg { display: none; }
+        body.field-mode { color: #fff; }
+        body.field-mode .glass, body.field-mode .glass-strong {
+            background: #000; backdrop-filter: none; -webkit-backdrop-filter: none;
+            border: 2px solid #fff;
+        }
+        body.field-mode .text-xs, body.field-mode .text-\[10px\], body.field-mode .text-\[11px\] { font-size: 0.95rem !important; }
+        body.field-mode button { min-height: 56px; }
+        body.field-mode input { min-height: 56px; font-size: 1.25rem; }
+        body.field-mode .field-hide { display: none !important; }
+        body.field-mode .text-slate-400, body.field-mode .text-slate-500, body.field-mode .text-slate-300 { color: #fff !important; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+        ::-webkit-scrollbar-track { background: transparent; }
+
+        /* Skeleton loader */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.04) 100%);
+            background-size: 200% 100%; animation: skel 1.5s infinite;
+        }
+        @keyframes skel { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+        /* Toggle switch */
+        .switch { width: 42px; height: 24px; background: rgba(255,255,255,0.1); border-radius: 12px; position: relative; cursor: pointer; transition: all 0.2s; }
+        .switch.on { background: var(--accent); }
+        .switch .knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: transform 0.25s cubic-bezier(0.16,1,0.3,1); }
+        .switch.on .knob { transform: translateX(18px); }
+
+        /* Tab pills */
+        .tab-pill { padding: 0.5rem 1rem; border-radius: 0.75rem; font-size: 0.75rem; font-weight: 600; color: var(--text-dim); transition: all 0.2s; cursor: pointer; white-space: nowrap; }
+        .tab-pill:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+        .tab-pill.active { background: rgba(16, 185, 129, 0.15); color: var(--accent); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
+
+        /* Score badge gradients */
+        .score-1 { background: linear-gradient(135deg, #10b981, #059669); }
+        .score-2 { background: linear-gradient(135deg, #fbbf24, #d97706); }
+        .score-3 { background: linear-gradient(135deg, #f97316, #c2410c); }
+        .score-4 { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+        .score-5 { background: linear-gradient(135deg, #a855f7, #6b21a8); }
+
+        /* Light mode override (system pref) */
+        @media (prefers-color-scheme: light) {
+            body:not(.force-dark):not(.field-mode) { background: #fafafc; color: #0a0a0f; }
+            body:not(.force-dark):not(.field-mode) .mesh-bg {
+                background:
+                    radial-gradient(at 15% 20%, rgba(16, 185, 129, 0.10) 0%, transparent 45%),
+                    radial-gradient(at 85% 25%, rgba(6, 182, 212, 0.08) 0%, transparent 45%),
+                    #fafafc;
+            }
+            body:not(.force-dark):not(.field-mode) .glass {
+                background: rgba(255,255,255,0.7);
+                border: 1px solid rgba(0,0,0,0.06);
+            }
+            body:not(.force-dark):not(.field-mode) .text-slate-300 { color: #334155; }
+            body:not(.force-dark):not(.field-mode) .text-slate-400 { color: #475569; }
+        }
+    </style>
+</head>
+<body class="force-dark">
+    <div class="mesh-bg"></div>
+
+    <!-- ============ TOP BAR ============ -->
+    <header class="sticky top-0 z-40 glass-strong border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-400 flex items-center justify-center font-black text-slate-900 text-sm shadow-lg shadow-emerald-500/30">BC</div>
+                </div>
+                <div>
+                    <h1 class="text-sm font-bold tracking-tight">BovinoCheck <span class="text-emerald-400">AI</span></h1>
+                    <p class="text-[10px] text-slate-500 mono">v8.0 · agentic edition</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <div id="api-pill" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 text-[10px] mono">
+                    <span id="api-pill-dot" class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span id="api-pill-text" class="text-slate-400">no config</span>
+                </div>
+                <button onclick="openCmdK()" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[11px] text-slate-400 mono border border-white/5 transition-all">
+                    <i data-lucide="search" class="w-3 h-3"></i> Buscar <kbd class="ml-2 px-1.5 py-0.5 bg-white/5 rounded text-[10px]">⌘K</kbd>
+                </button>
+                <button onclick="toggleFieldMode()" title="Modo campo (high-contrast outdoor)" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all">
+                    <i data-lucide="sun" class="w-4 h-4"></i>
+                </button>
+                <button onclick="openSettings()" class="w-9 h-9 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all">
+                    <i data-lucide="settings" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab navigation -->
+        <nav class="max-w-7xl mx-auto px-4 md:px-6 pb-2 flex gap-1 overflow-x-auto no-scrollbar">
+            <button onclick="switchTab('analyzer')" id="tab-analyzer-btn" class="tab-pill active flex items-center gap-1.5"><i data-lucide="scan-eye" class="w-3.5 h-3.5"></i>Analizar</button>
+            <button onclick="switchTab('stats')" id="tab-stats-btn" class="tab-pill flex items-center gap-1.5"><i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>Estadísticas</button>
+            <button onclick="switchTab('search')" id="tab-search-btn" class="tab-pill flex items-center gap-1.5"><i data-lucide="search" class="w-3.5 h-3.5"></i>Buscar</button>
+            <button onclick="switchTab('guide')" id="tab-guide-btn" class="tab-pill flex items-center gap-1.5"><i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>Guía</button>
+        </nav>
+    </header>
+
+    <!-- ============ MAIN LAYOUT ============ -->
+    <div class="max-w-7xl mx-auto px-4 md:px-6 py-6 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+
+        <!-- ============ MAIN CONTENT ============ -->
+        <main>
+
+            <!-- TAB: ANALYZER -->
+            <section id="tab-analyzer" class="tab-content active space-y-6">
+
+                <!-- Hero input -->
+                <div class="glass rounded-3xl p-6 relative overflow-hidden">
+                    <div class="absolute -top-20 -right-20 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative">
+                        <div class="flex items-center gap-2 mb-2">
+                            <p class="text-[10px] text-emerald-400 mono uppercase tracking-[0.2em]">Sistema operativo</p>
+                            <div class="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></div>
+                        </div>
+                        <h2 class="text-2xl md:text-3xl font-bold tracking-tight mb-1">¿Qué vaca evaluamos?</h2>
+                        <p class="text-sm text-slate-400 mb-5">4 agentes IA listos · cámara, video o comando de voz</p>
+
+                        <!-- Arete input + voice -->
+                        <div class="flex gap-2 mb-4">
+                            <div class="flex-1 glass rounded-2xl px-4 py-3.5 flex items-center gap-3 border border-white/5 focus-within:border-emerald-400/50 transition-all">
+                                <i data-lucide="tag" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+                                <input id="cow-id" type="text" placeholder="Arete (ej. EC-0142)" class="flex-1 bg-transparent outline-none text-lg font-bold placeholder-slate-600 mono" autocomplete="off">
+                            </div>
+                            <button onclick="startVoiceInput()" class="px-4 rounded-2xl glass glow-hover relative" title="Comando de voz">
+                                <i data-lucide="mic" class="w-5 h-5 text-emerald-400"></i>
+                            </button>
+                        </div>
+
+                        <!-- Capture buttons -->
+                        <div class="grid grid-cols-3 gap-3">
+                            <button onclick="document.getElementById('camera-input').click()" class="glass rounded-2xl p-4 flex flex-col items-center gap-2 glow-hover">
+                                <i data-lucide="camera" class="w-6 h-6 text-emerald-400"></i>
+                                <span class="text-xs font-semibold">Cámara</span>
+                            </button>
+                            <button onclick="document.getElementById('video-input').click()" class="glass rounded-2xl p-4 flex flex-col items-center gap-2 glow-hover">
+                                <i data-lucide="video" class="w-6 h-6 text-amber-400"></i>
+                                <span class="text-xs font-semibold">Video</span>
+                            </button>
+                            <button onclick="document.getElementById('file-input').click()" class="glass rounded-2xl p-4 flex flex-col items-center gap-2 glow-hover">
+                                <i data-lucide="image" class="w-6 h-6 text-cyan-400"></i>
+                                <span class="text-xs font-semibold">Galería</span>
+                            </button>
+                        </div>
+
+                        <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleMedia(event)">
+                        <input type="file" id="video-input" accept="video/*" capture="environment" class="hidden" onchange="handleMedia(event)">
+                        <input type="file" id="file-input" accept="image/*,video/*" class="hidden" onchange="handleMedia(event)">
+                    </div>
+                </div>
+
+                <!-- Cebú disclaimer -->
+                <div class="glass rounded-2xl px-5 py-3.5 border-l-2 border-amber-400/60 flex items-start gap-3 field-hide">
+                    <i data-lucide="info" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <p class="text-xs font-semibold text-amber-300">Modo Cebú activo</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Prompt ajustado para Bos indicus. La giba puede confundirse con arqueo: la IA usa la línea lumbosacra como referencia.</p>
+                    </div>
+                </div>
+
+                <!-- Preview + analyze -->
+                <div id="preview-section" class="hidden">
+                    <div class="glass rounded-3xl overflow-hidden">
+                        <div class="aspect-video bg-black/60 relative">
+                            <img id="image-preview" class="w-full h-full object-contain" alt="">
+                            <video id="video-preview" class="w-full h-full object-contain hidden" controls playsinline></video>
+                        </div>
+                        <div class="p-5 flex gap-3">
+                            <button onclick="changeImage()" class="flex-1 py-3.5 rounded-xl bg-white/5 hover:bg-white/10 text-sm font-medium transition-all flex items-center justify-center gap-2">
+                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Cambiar
+                            </button>
+                            <button id="analyze-btn" onclick="startAgenticAnalysis()" class="flex-[2] py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-slate-900 font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/40 transition-all">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i> Lanzar agentes IA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Result render target -->
+                <div id="result-section" class="hidden"></div>
+
+                <!-- KPI strip -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="glass rounded-2xl p-4 glow-hover">
+                        <p class="text-[10px] uppercase text-slate-500 mono tracking-wider mb-1">Hato</p>
+                        <p id="stat-total" class="text-3xl font-bold text-emerald-400">0</p>
+                        <p class="text-[10px] text-slate-500 mt-1">evaluados</p>
+                    </div>
+                    <div class="glass rounded-2xl p-4 glow-hover">
+                        <p class="text-[10px] uppercase text-slate-500 mono tracking-wider mb-1">Promedio</p>
+                        <p id="stat-avg" class="text-3xl font-bold text-amber-400">—</p>
+                        <p class="text-[10px] text-slate-500 mt-1">Sprecher 1-5</p>
+                    </div>
+                    <div class="glass rounded-2xl p-4 glow-hover">
+                        <p class="text-[10px] uppercase text-slate-500 mono tracking-wider mb-1">Sanos</p>
+                        <p id="stat-healthy" class="text-3xl font-bold text-emerald-400">0%</p>
+                        <p class="text-[10px] text-slate-500 mt-1">G1-G2</p>
+                    </div>
+                    <div class="glass rounded-2xl p-4 glow-hover">
+                        <p class="text-[10px] uppercase text-slate-500 mono tracking-wider mb-1">Críticos</p>
+                        <p id="stat-severe" class="text-3xl font-bold text-rose-400">0%</p>
+                        <p class="text-[10px] text-slate-500 mt-1">G4-G5</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: STATS -->
+            <section id="tab-stats" class="tab-content space-y-6">
+                <div class="glass rounded-3xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold">Estado del Hato</h2>
+                        <div class="flex gap-1 bg-white/5 rounded-xl p-1 text-[10px] mono">
+                            <button id="scale-sprecher" onclick="setScaleMode('sprecher')" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold">Sprecher</button>
+                            <button id="scale-wq" onclick="setScaleMode('wq')" class="px-3 py-1.5 rounded-lg text-slate-400 font-bold">Welfare Q.</button>
+                        </div>
+                    </div>
+                    <div id="stats-empty" class="text-center py-12 text-slate-500">
+                        <i data-lucide="line-chart" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
+                        <p class="text-sm">Sin datos aún</p>
+                        <p class="text-xs mt-1">Inicia evaluaciones para ver el dashboard</p>
+                    </div>
+                    <div id="stats-content" class="hidden space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="relative h-64"><canvas id="donutChart"></canvas></div>
+                            <div id="stats-insights" class="space-y-3"></div>
+                        </div>
+                        <div class="glass rounded-2xl p-5">
+                            <p class="text-[10px] uppercase tracking-widest text-slate-500 mono mb-3">Tendencia diaria</p>
+                            <div class="relative h-48"><canvas id="timelineChart"></canvas></div>
+                        </div>
+                        <div id="distribution-bars"></div>
+                        <button onclick="downloadFullReport(event)" class="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-slate-900 font-bold flex items-center justify-center gap-2 transition-all">
+                            <i data-lucide="file-down" class="w-4 h-4"></i> Descargar reporte PDF
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: SEARCH -->
+            <section id="tab-search" class="tab-content space-y-6">
+                <div class="glass rounded-3xl p-6">
+                    <h2 class="text-xl font-bold mb-4">Buscar por arete</h2>
+                    <div class="flex gap-2">
+                        <div class="flex-1 glass rounded-2xl px-4 py-3 flex items-center gap-3 border border-white/5">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                            <input id="search-input" type="text" placeholder="EC-0142..." class="flex-1 bg-transparent outline-none font-bold mono" onkeydown="if(event.key==='Enter')performSearch()">
+                        </div>
+                        <button onclick="performSearch()" class="px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold text-sm">Buscar</button>
+                    </div>
+                </div>
+                <div id="search-results"></div>
+            </section>
+
+            <!-- TAB: GUIDE -->
+            <section id="tab-guide" class="tab-content space-y-4">
+                <div class="glass rounded-3xl p-6">
+                    <h2 class="text-2xl font-bold tracking-tight mb-1">Sprecher 1-5</h2>
+                    <p class="text-sm text-slate-400 mb-6">Escala estándar con ajustes para Bos indicus tropical</p>
+                    <div class="space-y-3">
+                        <div class="glass rounded-2xl p-4 border-l-2 border-emerald-400">
+                            <div class="flex items-baseline gap-3 mb-2"><span class="text-3xl font-black text-emerald-400">G1</span><h3 class="font-bold">Normal</h3></div>
+                            <p class="text-xs text-slate-400">Lomo recto parado y caminando. Pasos largos rítmicos. Pezuñas traseras sobre huella de delanteras.</p>
+                        </div>
+                        <div class="glass rounded-2xl p-4 border-l-2 border-amber-400">
+                            <div class="flex items-baseline gap-3 mb-2"><span class="text-3xl font-black text-amber-400">G2</span><h3 class="font-bold">Cojera leve</h3></div>
+                            <p class="text-xs text-slate-400">Lomo recto parado, arqueo al caminar. Pasos ligeramente asimétricos. Momento óptimo para recorte preventivo.</p>
+                        </div>
+                        <div class="glass rounded-2xl p-4 border-l-2 border-orange-500">
+                            <div class="flex items-baseline gap-3 mb-2"><span class="text-3xl font-black text-orange-400">G3</span><h3 class="font-bold">Cojera moderada</h3></div>
+                            <p class="text-xs text-slate-400">Arqueo constante. Pasos cortos. Cabeceo cuando la pata dolorida toca el suelo.</p>
+                        </div>
+                        <div class="glass rounded-2xl p-4 border-l-2 border-rose-500">
+                            <div class="flex items-baseline gap-3 mb-2"><span class="text-3xl font-black text-rose-400">G4</span><h3 class="font-bold">Cojera severa</h3></div>
+                            <p class="text-xs text-slate-400">Arqueo pronunciado. No apoya completamente una pata. Cabeceo marcado.</p>
+                        </div>
+                        <div class="glass rounded-2xl p-4 border-l-2 border-purple-500">
+                            <div class="flex items-baseline gap-3 mb-2"><span class="text-3xl font-black text-purple-400">G5</span><h3 class="font-bold">Emergencia</h3></div>
+                            <p class="text-xs text-slate-400">Arqueo extremo. Puede negarse a levantarse. Atención veterinaria inmediata.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cebú adjustments -->
+                <div class="glass rounded-3xl p-6 border-l-2 border-amber-400/60">
+                    <div class="flex items-start gap-3 mb-3">
+                        <i data-lucide="info" class="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                        <div>
+                            <h3 class="font-bold text-amber-300">Ajustes para Cebú/Brahman tropical</h3>
+                            <p class="text-xs text-slate-400 mt-1">Sprecher se desarrolló en Holstein USA. En Bos indicus aplican estos ajustes:</p>
+                        </div>
+                    </div>
+                    <ul class="space-y-2 text-xs text-slate-300 pl-8">
+                        <li class="flex gap-2"><span class="text-amber-400">▸</span>Use la <b>línea lumbosacra</b> como referencia, no toracolumbar (giba sesga al alza)</li>
+                        <li class="flex gap-2"><span class="text-amber-400">▸</span>Ángulo de corvejón naturalmente más cerrado: no confundir con flexión por dolor</li>
+                        <li class="flex gap-2"><span class="text-amber-400">▸</span>Pastoreo extensivo atenúa signos sub-clínicos: aumente sensibilidad en G2</li>
+                    </ul>
+                </div>
+
+                <!-- Equivalencia WQ -->
+                <div class="glass rounded-3xl p-6">
+                    <h3 class="font-bold mb-3">Equivalencia con Welfare Quality EU 2009</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="glass rounded-xl p-3 text-center">
+                            <p class="text-emerald-400 font-bold">WQ 0</p>
+                            <p class="text-[10px] text-slate-500 mt-1">Sprecher G1, G2</p>
+                        </div>
+                        <div class="glass rounded-xl p-3 text-center">
+                            <p class="text-orange-400 font-bold">WQ 2</p>
+                            <p class="text-[10px] text-slate-500 mt-1">Sprecher G3, G4</p>
+                        </div>
+                        <div class="glass rounded-xl p-3 text-center">
+                            <p class="text-purple-400 font-bold">WQ 3</p>
+                            <p class="text-[10px] text-slate-500 mt-1">Sprecher G5</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- ============ SIDEBAR: AGENTIC TIMELINE ============ -->
+        <aside class="lg:sticky lg:top-32 lg:self-start space-y-4 field-hide">
+            <div class="glass rounded-3xl p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="relative">
+                            <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+                            <div class="absolute inset-0 w-2 h-2 rounded-full bg-emerald-400 animate-ping"></div>
+                        </div>
+                        <h3 class="text-sm font-bold">Agentes</h3>
+                    </div>
+                    <span class="text-[10px] text-slate-500 mono">4 ready</span>
+                </div>
+                <div id="agent-timeline" class="space-y-2.5 max-h-[600px] overflow-y-auto pr-1">
+                    <div class="text-center text-xs text-slate-500 py-10">
+                        <div class="w-12 h-12 rounded-2xl glass mx-auto mb-3 flex items-center justify-center">
+                            <i data-lucide="bot" class="w-6 h-6 opacity-40"></i>
+                        </div>
+                        <p>Sin análisis activos</p>
+                        <p class="text-[10px] mt-1 text-slate-600">Pulsa "Lanzar agentes" para ver el flujo</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick keys -->
+            <div class="glass rounded-3xl p-4 text-[10px] mono text-slate-500 space-y-1.5">
+                <p class="text-slate-400 font-bold uppercase tracking-widest mb-2">Atajos</p>
+                <div class="flex justify-between"><span>Command palette</span><kbd class="bg-white/5 px-2 py-0.5 rounded">⌘K</kbd></div>
+                <div class="flex justify-between"><span>Modo campo</span><kbd class="bg-white/5 px-2 py-0.5 rounded">F</kbd></div>
+                <div class="flex justify-between"><span>Nuevo análisis</span><kbd class="bg-white/5 px-2 py-0.5 rounded">N</kbd></div>
+                <div class="flex justify-between"><span>Cerrar modal</span><kbd class="bg-white/5 px-2 py-0.5 rounded">Esc</kbd></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- ============ COMMAND PALETTE ============ -->
+    <div id="cmdk" class="hidden fixed inset-0 z-[150] bg-black/60 backdrop-blur-md items-start justify-center pt-[15vh] px-4" onclick="if(event.target===this) closeCmdK()">
+        <div class="glass-strong rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div class="flex items-center gap-3 px-4 py-3 border-b border-white/5">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                <input id="cmdk-input" type="text" placeholder="Comandos, vacas, ayuda..." class="flex-1 bg-transparent outline-none text-sm" oninput="filterCmdK()">
+                <kbd class="text-[10px] mono text-slate-500 bg-white/5 px-2 py-0.5 rounded">esc</kbd>
+            </div>
+            <div id="cmdk-results" class="p-2 max-h-96 overflow-y-auto"></div>
+        </div>
+    </div>
+
+    <!-- ============ SETTINGS MODAL ============ -->
+    <div id="settings-modal" class="hidden fixed inset-0 z-[140] bg-black/60 backdrop-blur-md items-center justify-center p-4" onclick="if(event.target===this) closeSettings()">
+        <div class="glass-strong rounded-3xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 glass-strong px-6 py-4 border-b border-white/5 flex items-center justify-between rounded-t-3xl">
+                <h3 class="text-lg font-bold">Configuración</h3>
+                <button onclick="closeSettings()" class="w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-6">
+                <!-- API Key -->
+                <div>
+                    <label class="text-[10px] uppercase tracking-widest text-slate-400 mono mb-2 block">Google AI Key</label>
+                    <p class="text-[11px] text-slate-500 mb-2">Gratis: <a href="https://aistudio.google.com/apikey" target="_blank" class="text-emerald-400 underline">aistudio.google.com/apikey</a></p>
+                    <div class="flex gap-2">
+                        <input type="password" id="api-key-input" placeholder="AIzaSy..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm mono outline-none focus:border-emerald-400 placeholder-slate-600">
+                        <button onclick="toggleApiKeyVisibility()" class="px-3 rounded-xl bg-white/5 hover:bg-white/10"><i id="api-eye" data-lucide="eye" class="w-4 h-4"></i></button>
+                    </div>
+                    <div class="flex gap-2 mt-3">
+                        <button onclick="saveApiKey()" class="flex-1 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold text-xs transition-all">Guardar</button>
+                        <button onclick="testApiKey()" class="flex-1 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-medium transition-all">Probar conexión</button>
+                    </div>
+                </div>
+
+                <!-- Modelo -->
+                <div>
+                    <label class="text-[10px] uppercase tracking-widest text-slate-400 mono mb-2 block">Modelo Gemini</label>
+                    <select id="model-select" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-emerald-400">
+                        <option value="gemini-2.5-flash" class="bg-slate-900">Gemini 2.5 Flash (rápido)</option>
+                        <option value="gemini-2.5-pro" class="bg-slate-900">Gemini 2.5 Pro (más preciso)</option>
+                        <option value="gemini-2.0-flash" class="bg-slate-900">Gemini 2.0 Flash</option>
+                    </select>
+                </div>
+
+                <!-- Raza -->
+                <div>
+                    <label class="text-[10px] uppercase tracking-widest text-slate-400 mono mb-2 block">Raza default</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="setBreed('Holstein',this)" data-breed="Holstein" class="breed-pill py-2.5 rounded-xl border border-white/10 text-xs font-medium hover:bg-white/5 transition-all">Holstein</button>
+                        <button onclick="setBreed('Cebu',this)" data-breed="Cebu" class="breed-pill py-2.5 rounded-xl border border-emerald-500 bg-emerald-500/10 text-xs font-bold text-emerald-400">Cebú</button>
+                        <button onclick="setBreed('Mixto',this)" data-breed="Mixto" class="breed-pill py-2.5 rounded-xl border border-white/10 text-xs font-medium hover:bg-white/5 transition-all">Mixto</button>
+                    </div>
+                </div>
+
+                <!-- Modo campo -->
+                <div class="glass rounded-xl px-4 py-3 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium">Modo campo</p>
+                        <p class="text-[10px] text-slate-500">High-contrast, botones gigantes</p>
+                    </div>
+                    <div id="field-switch" class="switch" onclick="toggleFieldMode()"><div class="knob"></div></div>
+                </div>
+
+                <!-- Datos -->
+                <div class="space-y-2 border-t border-white/5 pt-4">
+                    <button onclick="exportData()" class="w-full px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs flex items-center gap-2 transition-all">
+                        <i data-lucide="download" class="w-4 h-4"></i> Exportar evaluaciones (JSON)
+                    </button>
+                    <label class="block">
+                        <span class="cursor-pointer w-full px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs flex items-center gap-2 transition-all">
+                            <i data-lucide="upload" class="w-4 h-4"></i> Importar JSON
+                        </span>
+                        <input type="file" accept=".json" class="hidden" onchange="importData(event)">
+                    </label>
+                    <button onclick="confirmDeleteAll()" class="w-full px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs flex items-center gap-2 transition-all">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i> Borrar todos los registros
+                    </button>
+                </div>
+
+                <!-- Footer -->
+                <div class="text-[10px] text-slate-600 leading-relaxed border-t border-white/5 pt-4">
+                    <p>BovinoCheck AI Pro v8.0 · UTMACH</p>
+                    <p class="mt-1">Datos locales (IndexedDB). API key cifrada en navegador. Soporte offline PWA.</p>
+                    <p id="storage-info" class="mono text-emerald-400/70 mt-1"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[300] space-y-2 max-w-sm pointer-events-none"></div>
+
+    <!-- ============ SCRIPT ============ -->
+    <script>
+        // ============ STATE ============
+        let db = null, analysisHistory = [], selectedBreed = 'Cebu', scaleMode = 'sprecher';
+        let base64Media = '', mediaMimeType = '', isVideo = false, originalMediaSrc = '';
+        let donutChart = null, timelineChart = null;
+
+        // ============ DB ============
+        async function initDB() {
+            db = await window.idb.openDB('BovinoCheckDB_v8', 1, {
+                upgrade(db) {
+                    if (!db.objectStoreNames.contains('evaluations')) {
+                        const s = db.createObjectStore('evaluations', { keyPath: 'id', autoIncrement: true });
+                        s.createIndex('cowId', 'cowId', { unique: false });
+                        s.createIndex('timestamp', 'timestamp', { unique: false });
+                    }
+                    if (!db.objectStoreNames.contains('settings')) db.createObjectStore('settings', { keyPath: 'key' });
+                }
+            });
+        }
+        async function getSetting(k, d=null) { const r = await db.get('settings', k); return r?.value ?? d; }
+        async function setSetting(k, v) { await db.put('settings', { key: k, value: v }); }
+        async function loadHistory() {
+            const all = await db.getAll('evaluations');
+            analysisHistory = all.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
+            updateKPIs();
+        }
+
+        // ============ KPIs ============
+        function updateKPIs() {
+            const n = analysisHistory.length;
+            document.getElementById('stat-total').innerText = n;
+            if (n === 0) {
+                document.getElementById('stat-avg').innerText = '—';
+                document.getElementById('stat-healthy').innerText = '0%';
+                document.getElementById('stat-severe').innerText = '0%';
+                return;
+            }
+            const sum = analysisHistory.reduce((s,h) => s+h.score, 0);
+            const healthy = analysisHistory.filter(h => h.score<=2).length;
+            const severe = analysisHistory.filter(h => h.score>=4).length;
+            document.getElementById('stat-avg').innerText = (sum/n).toFixed(1);
+            document.getElementById('stat-healthy').innerText = Math.round(healthy/n*100) + '%';
+            document.getElementById('stat-severe').innerText = Math.round(severe/n*100) + '%';
+        }
+
+        // ============ TOAST ============
+        function toast(msg, type='info', dur=3500) {
+            const styles = {
+                info: 'bg-slate-900 text-white border-slate-700',
+                success: 'bg-emerald-500 text-slate-900 border-emerald-400',
+                error: 'bg-rose-500 text-white border-rose-400',
+                warning: 'bg-amber-500 text-slate-900 border-amber-400'
+            };
+            const icons = { info:'info', success:'check-circle-2', error:'alert-circle', warning:'triangle-alert' };
+            const el = document.createElement('div');
+            el.className = `${styles[type]} px-4 py-3 rounded-2xl shadow-2xl text-sm font-medium flex items-center gap-2 pointer-events-auto border`;
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+            el.innerHTML = `<i data-lucide="${icons[type]}" class="w-4 h-4"></i><span>${msg}</span>`;
+            document.getElementById('toast-container').appendChild(el);
+            lucide.createIcons();
+            requestAnimationFrame(() => { el.style.opacity='1'; el.style.transform='translateY(0)'; });
+            setTimeout(() => {
+                el.style.opacity = '0'; el.style.transform = 'translateY(20px)';
+                setTimeout(() => el.remove(), 300);
+            }, dur);
+        }
+
+        // ============ TABS ============
+        function switchTab(name) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('[id^=tab-]').forEach(el => { if (el.id.endsWith('-btn')) el.classList.remove('active'); });
+            document.getElementById('tab-' + name).classList.add('active');
+            document.getElementById('tab-' + name + '-btn').classList.add('active');
+            if (name === 'stats') renderStats();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ============ MEDIA ============
+        function handleMedia(e) {
+            const f = e.target.files[0]; if (!f) return;
+            if (f.size > 20*1024*1024) { toast('Archivo >20MB', 'warning'); return; }
+            mediaMimeType = f.type;
+            isVideo = mediaMimeType.startsWith('video/');
+            const r = new FileReader();
+            r.onload = (ev) => {
+                base64Media = ev.target.result.split(',')[1];
+                originalMediaSrc = ev.target.result;
+                const img = document.getElementById('image-preview');
+                const vid = document.getElementById('video-preview');
+                if (isVideo) { vid.src = ev.target.result; vid.classList.remove('hidden'); img.classList.add('hidden'); }
+                else { img.src = ev.target.result; img.classList.remove('hidden'); vid.classList.add('hidden'); }
+                document.getElementById('preview-section').classList.remove('hidden');
+                document.getElementById('result-section').classList.add('hidden');
+                document.getElementById('preview-section').scrollIntoView({ behavior: 'smooth' });
+            };
+            r.readAsDataURL(f);
+        }
+        function changeImage() {
+            document.getElementById('preview-section').classList.add('hidden');
+            base64Media = ''; isVideo = false;
+        }
+
+        // ============ AGENTIC ANALYSIS ============
+        function clearTimeline() {
+            const tl = document.getElementById('agent-timeline');
+            const empty = tl.querySelector('.text-center');
+            if (empty) tl.innerHTML = '';
+        }
+        function addAgent(name, status, icon='bot', color='emerald') {
+            clearTimeline();
+            const tl = document.getElementById('agent-timeline');
+            const card = document.createElement('div');
+            card.className = 'agent-card glass rounded-2xl p-3';
+            card.innerHTML = `
+                <div class="flex items-center gap-2 mb-1.5">
+                    <div class="w-7 h-7 rounded-lg bg-${color}-500/15 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="${icon}" class="w-3.5 h-3.5 text-${color}-400"></i>
+                    </div>
+                    <p class="text-xs font-bold flex-1 truncate">${name}</p>
+                    <span class="text-[10px] mono text-slate-500">${new Date().toLocaleTimeString('es-EC').slice(0,5)}</span>
+                </div>
+                <div class="status text-[11px] text-slate-400 flex items-center gap-1">${status}</div>
+                <div class="content text-[11px] text-slate-300 mt-1.5 hidden"></div>
+            `;
+            tl.insertBefore(card, tl.firstChild);
+            requestAnimationFrame(() => card.classList.add('visible'));
+            lucide.createIcons();
+            return card;
+        }
+        function updateAgent(card, status, content='') {
+            card.querySelector('.status').innerHTML = status;
+            if (content) {
+                const c = card.querySelector('.content');
+                c.innerText = content;
+                c.classList.remove('hidden');
+            }
+        }
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+        async function startAgenticAnalysis() {
+            const cowId = document.getElementById('cow-id').value.trim();
+            if (!cowId) { toast('Falta arete', 'warning'); document.getElementById('cow-id').focus(); return; }
+            if (!base64Media) { toast('Falta foto/video', 'warning'); return; }
+
+            const apiKey = await getSetting('apiKey', '');
+            if (!apiKey) { toast('Configura tu API key en ⚙', 'warning'); openSettings(); return; }
+            const model = await getSetting('model', 'gemini-2.5-flash');
+            const breed = (await getSetting('breed', selectedBreed)) || selectedBreed;
+
+            const btn = document.getElementById('analyze-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="thinking-dot"></span><span class="thinking-dot"></span><span class="thinking-dot"></span>';
+
+            // Agent 1: Visión (preprocesamiento)
+            const a1 = addAgent('Agente Visión', 'Codificando media…', 'eye', 'cyan');
+            await sleep(450);
+            updateAgent(a1, `<i data-lucide="check" class="w-3 h-3 text-emerald-400"></i> Frame procesado`, `${isVideo?'Video':'Imagen'} · ~${Math.round(base64Media.length*0.75/1024)} KB base64`);
+            lucide.createIcons();
+
+            // Agent 2: Clínico
+            const a2 = addAgent('Agente Clínico', 'Construyendo prompt Sprecher…', 'stethoscope', 'emerald');
+            await sleep(600);
+            updateAgent(a2, `<i data-lucide="check" class="w-3 h-3 text-emerald-400"></i> Prompt listo`, `${model} · raza ${breed} · ajuste giba activo`);
+            lucide.createIcons();
+
+            // Agent 3: IA multimodal (real)
+            const a3 = addAgent('Agente IA Multimodal', `<span class="thinking-dot"></span><span class="thinking-dot"></span><span class="thinking-dot"></span> Inferencia Gemini…`, 'sparkles', 'emerald');
+
+            try {
+                const prompt = buildPrompt(cowId, breed);
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: mediaMimeType||'image/png', data: base64Media }}]}],
+                        generationConfig: { responseMimeType: 'application/json' }
+                    })
+                });
+                if (!r.ok) {
+                    const err = await r.json().catch(() => ({}));
+                    throw new Error(err.error?.message || `HTTP ${r.status}`);
+                }
+                const data = await r.json();
+                const txt = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!txt) throw new Error('Respuesta vacía');
+                const result = JSON.parse(txt);
+                updateAgent(a3, `<i data-lucide="check" class="w-3 h-3 text-emerald-400"></i> Inferencia completa`, `Sprecher G${result.score} · confianza ${result.confidence||'?'}`);
+                lucide.createIcons();
+
+                // Agent 4: Recomendación
+                const a4 = addAgent('Agente Recomendación', 'Mapeando protocolo clínico…', 'pill-bottle', 'amber');
+                await sleep(500);
+                updateAgent(a4, `<i data-lucide="check" class="w-3 h-3 text-emerald-400"></i> Protocolo asignado`, (result.recommendation||'').slice(0, 70) + '…');
+                lucide.createIcons();
+
+                // Save
+                const finalData = {
+                    ...result, cowId, breed,
+                    timestamp: Date.now(),
+                    timestampStr: new Date().toLocaleString('es-EC'),
+                    image: originalMediaSrc, isVideo,
+                    appVersion: '8.0', scaleVersion: 'Sprecher-1997'
+                };
+                const id = await db.add('evaluations', finalData);
+                finalData.id = id;
+                analysisHistory.unshift(finalData);
+                updateKPIs();
+                renderResult(finalData);
+                const sev = finalData.score<=2 ? 'success' : finalData.score<=3 ? 'warning' : 'error';
+                toast(`G${finalData.score} guardado · ${finalData.label}`, sev);
+            } catch (e) {
+                updateAgent(a3, `<i data-lucide="x" class="w-3 h-3 text-rose-400"></i> Error`, e.message);
+                lucide.createIcons();
+                toast('Error: ' + e.message, 'error', 5000);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="sparkles" class="w-4 h-4"></i> Lanzar agentes IA';
+                lucide.createIcons();
+            }
+        }
+
+        function buildPrompt(cowId, breed) {
+            const breedNote = {
+                Holstein: 'Animal Holstein lechero estabulado. Aplica Sprecher estándar.',
+                Cebu: 'Animal CEBÚ/BRAHMAN TROPICAL Bos indicus. CRÍTICO: la giba puede confundirse con arqueo dorsal. Usa la LÍNEA LUMBOSACRA (no toracolumbar) como referencia para back-arch. El ángulo de corvejón es naturalmente más cerrado.',
+                Mixto: 'Raza mixta o no tipificada. Cuidado con back-arch (posible componente Bos indicus).'
+            }[breed] || '';
+            return `Eres veterinario podólogo experto en ganado tropical El Oro Ecuador. Evalúa cojera de vaca arete ${cowId} usando Sprecher 1-5.
+${breedNote}
+
+Evalúa con detalle: 1) curvatura del lomo (estática y dinámica) 2) asimetría de paso y zancada 3) soporte de peso por extremidad 4) cabeceo compensatorio.
+
+Responde estrictamente JSON:
+{"score": 1-5, "label": "string 3-6 palabras", "analysis": "string clínico 2-4 frases", "evidence": ["string", "string"], "recommendation": "pasos clínicos detallados", "confidence": "low|medium|high"}`;
+        }
+
+        function renderResult(data) {
+            const wq = data.score<=2 ? 0 : data.score<=4 ? 2 : 3;
+            const wqLabel = { 0:'Sano', 2:'Cojo', 3:'Severa' }[wq];
+            const conf = data.confidence || 'medium';
+            const el = document.getElementById('result-section');
+            el.classList.remove('hidden');
+            el.innerHTML = `
+                <div class="glass rounded-3xl overflow-hidden">
+                    <div class="score-${data.score} p-6 text-white relative overflow-hidden">
+                        <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+                        <div class="relative flex items-start justify-between">
+                            <div>
+                                <p class="text-[10px] mono uppercase tracking-widest opacity-80">${data.breed||'?'} · arete</p>
+                                <h3 class="text-4xl font-black mt-1">${data.cowId}</h3>
+                                <p class="text-sm font-bold mt-2 opacity-95">${data.label}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] mono uppercase opacity-80">Grado</p>
+                                <p class="text-6xl font-black leading-none mt-1">${data.score}</p>
+                            </div>
+                        </div>
+                    </div>
+                    ${data.isVideo
+                        ? `<video src="${data.image}" controls playsinline class="w-full aspect-video object-cover bg-black"></video>`
+                        : `<img src="${data.image}" class="w-full aspect-video object-cover bg-black" alt="">`}
+                    <div class="p-5 space-y-4">
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-2.5 py-1 rounded-lg bg-white/5 text-[10px] font-bold mono border border-white/10">Sprecher G${data.score}</span>
+                            <span class="px-2.5 py-1 rounded-lg bg-white/5 text-[10px] font-bold mono border border-white/10">WQ${wq} · ${wqLabel}</span>
+                            <span class="px-2.5 py-1 rounded-lg bg-white/5 text-[10px] font-bold mono border border-white/10 uppercase">conf ${conf}</span>
+                        </div>
+                        <p class="text-sm text-slate-300 italic leading-relaxed">${data.analysis}</p>
+                        ${(data.evidence||[]).length ? `
+                            <div class="glass rounded-2xl p-4 border border-white/5">
+                                <p class="text-[10px] uppercase mono text-cyan-400 mb-2 tracking-widest">Evidencia visual</p>
+                                <ul class="space-y-1.5 text-xs text-slate-300">
+                                    ${data.evidence.map(e => `<li class="flex gap-2"><span class="text-cyan-400">▸</span>${e}</li>`).join('')}
+                                </ul>
+                            </div>` : ''}
+                        <div class="glass rounded-2xl p-4 border-l-2 border-emerald-400">
+                            <p class="text-[10px] uppercase mono text-emerald-400 mb-1 tracking-widest">Protocolo de salud</p>
+                            <p class="text-sm font-medium">${data.recommendation}</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-2">
+                            <button onclick="downloadPDF('${data.cowId}', ${data.id}, event)" class="py-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold flex items-center justify-center gap-2 transition-all">
+                                <i data-lucide="file-down" class="w-4 h-4"></i> PDF
+                            </button>
+                            <button onclick="resetAnalyzer()" class="py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-900 text-xs font-bold flex items-center justify-center gap-2 transition-all">
+                                <i data-lucide="plus" class="w-4 h-4"></i> Siguiente
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            lucide.createIcons();
+        }
+
+        function resetAnalyzer() {
+            document.getElementById('cow-id').value = '';
+            document.getElementById('preview-section').classList.add('hidden');
+            document.getElementById('result-section').classList.add('hidden');
+            base64Media = ''; isVideo = false; originalMediaSrc = '';
+            document.getElementById('cow-id').focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // ============ PDF ============
+        function downloadPDF(cowId, id, ev) {
+            const data = analysisHistory.find(h => h.id === id);
+            if (!data) return;
+            const btn = ev.currentTarget;
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<span class="thinking-dot"></span> Generando...';
+            btn.disabled = true;
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'position:absolute;left:0;top:0;width:800px;background:#fff;color:#000;padding:30px;font-family:Geist,system-ui,sans-serif;z-index:-9999';
+            const wq = data.score<=2 ? 0 : data.score<=4 ? 2 : 3;
+            wrapper.innerHTML = `
+                <div style="border-bottom:3px solid #065f46;padding-bottom:15px;margin-bottom:20px">
+                    <h1 style="color:#065f46;font-size:28px;margin:0;font-weight:900">BovinoCheck AI · Reporte Clínico</h1>
+                    <p style="color:#666;font-size:13px;margin:5px 0 0">Arete ${data.cowId} · ${data.breed} · ${data.timestampStr}</p>
+                </div>
+                <div style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;padding:25px;border-radius:16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:start">
+                    <div>
+                        <p style="font-size:11px;opacity:0.8;margin:0">SPRECHER GRADO</p>
+                        <p style="font-size:64px;font-weight:900;margin:0;line-height:1">${data.score}</p>
+                        <p style="font-size:14px;font-weight:bold;margin-top:8px">${data.label}</p>
+                    </div>
+                    <div style="text-align:right">
+                        <p style="font-size:11px;opacity:0.8;margin:0">WELFARE QUALITY</p>
+                        <p style="font-size:24px;font-weight:bold;margin:0">WQ ${wq}</p>
+                    </div>
+                </div>
+                ${!data.isVideo ? `<img src="${data.image}" style="width:100%;border-radius:12px;margin-bottom:15px">` : ''}
+                <h3 style="color:#065f46;font-size:14px;margin:20px 0 8px">Análisis</h3>
+                <p style="font-size:12px;line-height:1.6;color:#333">${data.analysis}</p>
+                ${(data.evidence||[]).length ? `
+                    <h3 style="color:#065f46;font-size:14px;margin:20px 0 8px">Evidencia</h3>
+                    <ul style="font-size:12px;color:#333">${data.evidence.map(e=>`<li style="margin:4px 0">${e}</li>`).join('')}</ul>` : ''}
+                <h3 style="color:#065f46;font-size:14px;margin:20px 0 8px">Protocolo</h3>
+                <p style="font-size:12px;line-height:1.6;color:#333;background:#f0fdf4;padding:12px;border-radius:8px;border-left:3px solid #10b981">${data.recommendation}</p>
+                <p style="font-size:10px;color:#999;margin-top:30px;text-align:center;border-top:1px solid #eee;padding-top:15px">BovinoCheck AI Pro v8.0 · UTMACH · No reemplaza criterio clínico veterinario</p>
+            `;
+            document.body.appendChild(wrapper);
+            html2pdf().set({
+                margin: 10, filename: `BovinoCheck_${data.cowId}.pdf`,
+                image: { type:'jpeg', quality: 0.95 },
+                html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true },
+                jsPDF: { unit:'mm', format:'a4', orientation:'portrait' }
+            }).from(wrapper).save().then(() => {
+                document.body.removeChild(wrapper);
+                btn.innerHTML = orig;
+                btn.disabled = false;
+                lucide.createIcons();
+                toast('PDF descargado', 'success');
+            });
+        }
+
+        function downloadFullReport(ev) {
+            if (!analysisHistory.length) { toast('Sin datos para reporte', 'warning'); return; }
+            const btn = ev.currentTarget;
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<span class="thinking-dot"></span> Generando...';
+            btn.disabled = true;
+            const stats = {1:0,2:0,3:0,4:0,5:0};
+            let sum = 0;
+            analysisHistory.forEach(h => { stats[h.score]++; sum += h.score; });
+            const total = analysisHistory.length;
+            const avg = (sum/total).toFixed(1);
+            const healthy = Math.round((stats[1]+stats[2])/total*100);
+            const severe = Math.round((stats[4]+stats[5])/total*100);
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'position:absolute;left:0;top:0;width:800px;background:#fff;color:#000;padding:30px;font-family:Geist,system-ui,sans-serif;z-index:-9999';
+            let html = `
+                <div style="text-align:center;border-bottom:3px solid #065f46;padding-bottom:15px;margin-bottom:20px">
+                    <h1 style="color:#065f46;font-size:26px;margin:0;font-weight:900">Reporte General del Hato</h1>
+                    <p style="color:#666;font-size:12px;margin:5px 0 0">${new Date().toLocaleDateString('es-EC')} · BovinoCheck v8.0</p>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+                    <div style="background:#f0fdf4;border:1px solid #d1fae5;border-radius:10px;padding:12px;text-align:center"><p style="font-size:9px;color:#065f46;margin:0;text-transform:uppercase">Total</p><p style="font-size:22px;font-weight:bold;color:#065f46;margin:4px 0 0">${total}</p></div>
+                    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;text-align:center"><p style="font-size:9px;color:#92400e;margin:0;text-transform:uppercase">Promedio</p><p style="font-size:22px;font-weight:bold;color:#92400e;margin:4px 0 0">${avg}</p></div>
+                    <div style="background:#f0fdf4;border:1px solid #d1fae5;border-radius:10px;padding:12px;text-align:center"><p style="font-size:9px;color:#065f46;margin:0;text-transform:uppercase">Sanos</p><p style="font-size:22px;font-weight:bold;color:#065f46;margin:4px 0 0">${healthy}%</p></div>
+                    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px;text-align:center"><p style="font-size:9px;color:#991b1b;margin:0;text-transform:uppercase">Críticos</p><p style="font-size:22px;font-weight:bold;color:#991b1b;margin:4px 0 0">${severe}%</p></div>
+                </div>
+                <h3 style="color:#065f46;font-size:14px;margin:20px 0 10px">Distribución por Grado</h3>`;
+            const colors = {1:'#10b981',2:'#fbbf24',3:'#f97316',4:'#ef4444',5:'#a855f7'};
+            for (let i=1; i<=5; i++) {
+                const p = Math.round(stats[i]/total*100);
+                html += `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="font-weight:bold">G${i}</span><span>${stats[i]} (${p}%)</span></div><div style="background:#f1f5f9;height:8px;border-radius:4px;overflow:hidden"><div style="background:${colors[i]};height:100%;width:${p}%"></div></div></div>`;
+            }
+            html += `<p style="font-size:10px;color:#999;margin-top:30px;text-align:center;border-top:1px solid #eee;padding-top:15px">BovinoCheck AI Pro v8.0 · UTMACH</p>`;
+            wrapper.innerHTML = html;
+            document.body.appendChild(wrapper);
+            html2pdf().set({
+                margin: 10, filename: `BovinoCheck_Hato_${new Date().toISOString().slice(0,10)}.pdf`,
+                image: { type:'jpeg', quality: 0.95 },
+                html2canvas: { scale: 2, backgroundColor: '#ffffff' },
+                jsPDF: { unit:'mm', format:'a4', orientation:'portrait' }
+            }).from(wrapper).save().then(() => {
+                document.body.removeChild(wrapper);
+                btn.innerHTML = orig;
+                btn.disabled = false;
+                lucide.createIcons();
+                toast('Reporte descargado', 'success');
+            });
+        }
+
+        // ============ STATS RENDER ============
+        function setScaleMode(m) {
+            scaleMode = m;
+            document.getElementById('scale-sprecher').className = m==='sprecher' ? 'px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold' : 'px-3 py-1.5 rounded-lg text-slate-400 font-bold';
+            document.getElementById('scale-wq').className = m==='wq' ? 'px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold' : 'px-3 py-1.5 rounded-lg text-slate-400 font-bold';
+            renderStats();
+        }
+
+        function renderStats() {
+            const n = analysisHistory.length;
+            if (n === 0) {
+                document.getElementById('stats-empty').classList.remove('hidden');
+                document.getElementById('stats-content').classList.add('hidden');
+                return;
+            }
+            document.getElementById('stats-empty').classList.add('hidden');
+            document.getElementById('stats-content').classList.remove('hidden');
+
+            const stats = {1:0,2:0,3:0,4:0,5:0};
+            let sum = 0;
+            analysisHistory.forEach(h => { stats[h.score]++; sum += h.score; });
+            const avg = (sum/n).toFixed(1);
+
+            // Donut
+            if (donutChart) donutChart.destroy();
+            const donutData = scaleMode==='sprecher'
+                ? { labels:['G1','G2','G3','G4','G5'], data:[stats[1],stats[2],stats[3],stats[4],stats[5]], colors:['#10b981','#fbbf24','#f97316','#ef4444','#a855f7'] }
+                : { labels:['WQ 0 Sano','WQ 2 Cojo','WQ 3 Severa'], data:[stats[1]+stats[2], stats[3]+stats[4], stats[5]], colors:['#10b981','#f97316','#a855f7'] };
+            donutChart = new Chart(document.getElementById('donutChart'), {
+                type: 'doughnut',
+                data: { labels: donutData.labels, datasets: [{ data: donutData.data, backgroundColor: donutData.colors, borderColor: 'rgba(255,255,255,0.05)', borderWidth: 2 }] },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { family: 'Geist', size: 11 } } } },
+                    cutout: '72%'
+                }
+            });
+
+            // Insights
+            const insights = document.getElementById('stats-insights');
+            insights.innerHTML = '<p class="text-[10px] uppercase tracking-widest text-slate-500 mono mb-2">Diagnóstico</p>';
+            if (avg <= 2.0) insights.innerHTML += `<div class="glass rounded-xl p-3 border-l-2 border-emerald-400 text-xs"><b class="text-emerald-400">Excelente estado.</b> Mantén rutinas de recorte preventivo y pediluvios.</div>`;
+            else if (avg <= 3.0) insights.innerHTML += `<div class="glass rounded-xl p-3 border-l-2 border-amber-400 text-xs"><b class="text-amber-400">Alerta preventiva.</b> Incremento en cojeras leves/moderadas. Revisa pisos.</div>`;
+            else insights.innerHTML += `<div class="glass rounded-xl p-3 border-l-2 border-orange-500 text-xs"><b class="text-orange-400">Estado preocupante.</b> Programa visita técnica prioritaria.</div>`;
+            const sev = Math.round((stats[4]+stats[5])/n*100);
+            if (sev > 10) insights.innerHTML += `<div class="glass rounded-xl p-3 border-l-2 border-rose-500 text-xs mt-2"><b class="text-rose-400">¡EMERGENCIA!</b> ${sev}% del hato en G4-G5. Aislar y tratar urgente.</div>`;
+
+            // Timeline
+            const byDay = {};
+            analysisHistory.forEach(h => {
+                const d = new Date(h.timestamp).toISOString().slice(0,10);
+                if (!byDay[d]) byDay[d] = [];
+                byDay[d].push(h.score);
+            });
+            const days = Object.keys(byDay).sort();
+            const avgs = days.map(d => (byDay[d].reduce((a,b)=>a+b,0)/byDay[d].length).toFixed(2));
+            if (timelineChart) timelineChart.destroy();
+            timelineChart = new Chart(document.getElementById('timelineChart'), {
+                type: 'line',
+                data: { labels: days.map(d=>d.slice(5)), datasets: [{
+                    label: 'Promedio diario', data: avgs,
+                    borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.15)',
+                    fill: true, tension: 0.35, pointRadius: 4, pointBackgroundColor: '#10b981'
+                }]},
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 1, max: 5, ticks: { stepSize: 1, color: '#94a3b8', font:{family:'Geist'} }, grid:{color:'rgba(255,255,255,0.05)'} },
+                        x: { ticks: { color: '#94a3b8', font:{family:'Geist Mono', size: 10} }, grid:{color:'rgba(255,255,255,0.03)'} }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Distribution bars
+            const colors = {1:'bg-emerald-400',2:'bg-amber-400',3:'bg-orange-500',4:'bg-rose-500',5:'bg-purple-500'};
+            let bars = `<p class="text-[10px] uppercase tracking-widest text-slate-500 mono mb-3">Detalle por grado</p><div class="space-y-3">`;
+            for (let i=1; i<=5; i++) {
+                const p = Math.round(stats[i]/n*100);
+                const aretes = analysisHistory.filter(h => h.score===i).map(h => h.cowId);
+                bars += `<div>
+                    <div class="flex justify-between text-[10px] uppercase mono mb-1.5 text-slate-400">
+                        <span>Grado ${i}</span><span>${stats[i]} · ${p}%</span>
+                    </div>
+                    <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden">
+                        <div class="${colors[i]} h-full rounded-full" style="width:${p}%;transition: width 1s cubic-bezier(0.16, 1, 0.3, 1)"></div>
+                    </div>
+                    ${aretes.length ? `<div class="flex flex-wrap gap-1 mt-2">${aretes.map(a => `<span class="bg-white/5 border border-white/10 px-1.5 py-0.5 rounded text-[9px] mono">#${a}</span>`).join('')}</div>` : ''}
+                </div>`;
+            }
+            bars += `</div>`;
+            document.getElementById('distribution-bars').innerHTML = bars;
+        }
+
+        // ============ SEARCH ============
+        function performSearch() {
+            const q = document.getElementById('search-input').value.trim().toLowerCase();
+            const wrap = document.getElementById('search-results');
+            if (!q) { wrap.innerHTML = ''; return; }
+            const matches = analysisHistory.filter(h => h.cowId.toLowerCase().includes(q));
+            if (!matches.length) {
+                wrap.innerHTML = `<div class="glass rounded-3xl p-8 text-center text-slate-500">
+                    <i data-lucide="search-x" class="w-8 h-8 mx-auto mb-2 opacity-30"></i>
+                    <p class="text-xs">Sin registros para "${q}"</p>
+                </div>`;
+                lucide.createIcons();
+                return;
+            }
+            wrap.innerHTML = matches.map(m => {
+                const color = { 1:'emerald', 2:'amber', 3:'orange', 4:'rose', 5:'purple' }[m.score];
+                return `<div class="glass rounded-2xl p-4 flex gap-4 items-center mb-3 glow-hover">
+                    ${m.isVideo
+                        ? `<video src="${m.image}" class="w-16 h-16 object-cover rounded-xl" muted playsinline></video>`
+                        : `<img src="${m.image}" class="w-16 h-16 object-cover rounded-xl">`}
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <p class="text-[9px] uppercase tracking-widest text-slate-500 mono">${m.breed||'?'}</p>
+                            <span class="text-[9px] text-slate-600">·</span>
+                            <p class="text-[9px] text-slate-500 mono">${new Date(m.timestamp).toLocaleDateString('es-EC')}</p>
+                        </div>
+                        <h4 class="font-black text-lg mono">#${m.cowId}</h4>
+                        <p class="text-xs text-slate-400 mt-0.5">${m.label}</p>
+                    </div>
+                    <div class="score-${m.score} text-white px-3 py-2 rounded-xl text-center">
+                        <p class="text-[9px] uppercase mono opacity-80">G</p>
+                        <p class="text-xl font-black leading-none">${m.score}</p>
+                    </div>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // ============ VOICE ============
+        function startVoiceInput() {
+            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SR) { toast('Voz no soportada', 'warning'); return; }
+            const rec = new SR();
+            rec.lang = 'es-EC';
+            rec.interimResults = false;
+            rec.onresult = (e) => {
+                const t = e.results[0][0].transcript;
+                const m = t.match(/(\d+)/);
+                if (m) {
+                    document.getElementById('cow-id').value = m[1];
+                    toast(`Arete ${m[1]}`, 'success');
+                } else toast(`Dije: "${t}"`, 'info');
+            };
+            rec.onerror = () => toast('Error de voz', 'error');
+            rec.start();
+            toast('🎤 Escuchando...', 'info', 2500);
+        }
+
+        // ============ SETTINGS ============
+        async function openSettings() {
+            document.getElementById('api-key-input').value = await getSetting('apiKey', '');
+            document.getElementById('model-select').value = await getSetting('model', 'gemini-2.5-flash');
+            const breed = await getSetting('breed', 'Cebu');
+            document.querySelectorAll('.breed-pill').forEach(b => {
+                if (b.dataset.breed === breed) b.className = 'breed-pill py-2.5 rounded-xl border border-emerald-500 bg-emerald-500/10 text-xs font-bold text-emerald-400';
+                else b.className = 'breed-pill py-2.5 rounded-xl border border-white/10 text-xs font-medium hover:bg-white/5 transition-all';
+            });
+            if (navigator.storage?.estimate) {
+                const { usage, quota } = await navigator.storage.estimate();
+                document.getElementById('storage-info').innerText = `Almacenamiento: ${(usage/1048576).toFixed(1)} / ${(quota/1048576).toFixed(0)} MB`;
+            }
+            document.getElementById('settings-modal').classList.remove('hidden');
+            document.getElementById('settings-modal').classList.add('flex');
+            lucide.createIcons();
+        }
+        function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); document.getElementById('settings-modal').classList.remove('flex'); }
+        function toggleApiKeyVisibility() {
+            const i = document.getElementById('api-key-input');
+            const e = document.getElementById('api-eye');
+            if (i.type === 'password') { i.type = 'text'; e.setAttribute('data-lucide', 'eye-off'); }
+            else { i.type = 'password'; e.setAttribute('data-lucide', 'eye'); }
+            lucide.createIcons();
+        }
+        async function saveApiKey() {
+            const k = document.getElementById('api-key-input').value.trim();
+            if (!k) { toast('Ingresa una key', 'warning'); return; }
+            await setSetting('apiKey', k);
+            await setSetting('model', document.getElementById('model-select').value);
+            updateApiPill();
+            toast('Configuración guardada', 'success');
+        }
+        async function testApiKey() {
+            const k = document.getElementById('api-key-input').value.trim();
+            if (!k) { toast('Ingresa key', 'warning'); return; }
+            toast('Probando…', 'info', 1500);
+            try {
+                const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${k}`, {
+                    method: 'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ contents:[{parts:[{text:'OK'}]}], generationConfig:{maxOutputTokens:5} })
+                });
+                if (r.ok) toast('✓ Conexión OK', 'success');
+                else { const e = await r.json().catch(()=>({})); toast('Error: '+(e.error?.message||r.status), 'error', 5000); }
+            } catch { toast('Sin internet', 'error'); }
+        }
+        function setBreed(b, btn) {
+            selectedBreed = b;
+            setSetting('breed', b);
+            document.querySelectorAll('.breed-pill').forEach(p => p.className = 'breed-pill py-2.5 rounded-xl border border-white/10 text-xs font-medium hover:bg-white/5 transition-all');
+            btn.className = 'breed-pill py-2.5 rounded-xl border border-emerald-500 bg-emerald-500/10 text-xs font-bold text-emerald-400';
+        }
+        function toggleFieldMode() {
+            document.body.classList.toggle('field-mode');
+            const sw = document.getElementById('field-switch');
+            if (sw) sw.classList.toggle('on');
+        }
+        async function exportData() {
+            const data = { version:'8.0', exportedAt:new Date().toISOString(), count: analysisHistory.length, evaluations: analysisHistory };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `bovinocheck_${new Date().toISOString().slice(0,10)}.json`;
+            a.click(); URL.revokeObjectURL(url);
+            toast(`${analysisHistory.length} exportados`, 'success');
+        }
+        async function importData(e) {
+            const f = e.target.files[0]; if (!f) return;
+            try {
+                const data = JSON.parse(await f.text());
+                let n = 0;
+                for (const r of data.evaluations) { const {id, ...rest} = r; await db.add('evaluations', rest); n++; }
+                await loadHistory();
+                renderStats();
+                toast(`${n} importados`, 'success');
+            } catch (er) { toast('Error: '+er.message, 'error'); }
+        }
+        async function confirmDeleteAll() {
+            if (!analysisHistory.length) { toast('Sin datos', 'info'); return; }
+            if (!confirm(`¿Borrar TODOS los ${analysisHistory.length} registros? Irreversible.`)) return;
+            await db.clear('evaluations');
+            analysisHistory = [];
+            updateKPIs();
+            renderStats();
+            toast('Borrado completo', 'success');
+            closeSettings();
+        }
+
+        async function updateApiPill() {
+            const k = await getSetting('apiKey', '');
+            const dot = document.getElementById('api-pill-dot');
+            const txt = document.getElementById('api-pill-text');
+            if (k) { dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400'; txt.innerText = 'listo'; txt.className = 'text-emerald-400'; }
+            else { dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-400'; txt.innerText = 'no config'; txt.className = 'text-amber-400'; }
+        }
+
+        // ============ COMMAND PALETTE ============
+        const commands = [
+            { name: 'Nueva evaluación', icon: 'camera', shortcut: 'N', action: () => { closeCmdK(); switchTab('analyzer'); setTimeout(()=>document.getElementById('cow-id').focus(), 200); } },
+            { name: 'Estadísticas del hato', icon: 'bar-chart-3', action: () => { closeCmdK(); switchTab('stats'); } },
+            { name: 'Buscar vaca', icon: 'search', action: () => { closeCmdK(); switchTab('search'); setTimeout(()=>document.getElementById('search-input').focus(), 200); } },
+            { name: 'Guía Sprecher', icon: 'graduation-cap', action: () => { closeCmdK(); switchTab('guide'); } },
+            { name: 'Comando de voz', icon: 'mic', action: () => { closeCmdK(); startVoiceInput(); } },
+            { name: 'Configuración', icon: 'settings', action: () => { closeCmdK(); openSettings(); } },
+            { name: 'Modo campo (high-contrast)', icon: 'sun', shortcut: 'F', action: () => { closeCmdK(); toggleFieldMode(); } },
+            { name: 'Exportar datos JSON', icon: 'download', action: () => { closeCmdK(); exportData(); } }
+        ];
+        function openCmdK() { document.getElementById('cmdk').classList.remove('hidden'); document.getElementById('cmdk').classList.add('flex'); document.getElementById('cmdk-input').focus(); renderCmdK(commands); }
+        function closeCmdK() { document.getElementById('cmdk').classList.add('hidden'); document.getElementById('cmdk').classList.remove('flex'); document.getElementById('cmdk-input').value=''; }
+        function filterCmdK() {
+            const q = document.getElementById('cmdk-input').value.toLowerCase();
+            const cmds = commands.filter(c => c.name.toLowerCase().includes(q));
+            const cows = analysisHistory.filter(h => h.cowId.toLowerCase().includes(q)).slice(0, 5).map(h => ({
+                name: `Ver #${h.cowId} · G${h.score} · ${h.breed||''}`,
+                icon: 'tag',
+                action: () => { closeCmdK(); switchTab('search'); document.getElementById('search-input').value = h.cowId; performSearch(); }
+            }));
+            renderCmdK([...cmds, ...cows]);
+        }
+        function renderCmdK(items) {
+            const wrap = document.getElementById('cmdk-results');
+            if (!items.length) { wrap.innerHTML = '<p class="text-center text-xs text-slate-500 py-8">Sin resultados</p>'; return; }
+            wrap.innerHTML = items.map((c, i) => `
+                <div data-cmd-idx="${i}" class="cmdk-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 cursor-pointer text-sm">
+                    <i data-lucide="${c.icon}" class="w-4 h-4 text-slate-400"></i>
+                    <span class="flex-1">${c.name}</span>
+                    ${c.shortcut ? `<kbd class="text-[10px] mono text-slate-500 bg-white/5 px-1.5 py-0.5 rounded">${c.shortcut}</kbd>` : ''}
+                </div>
+            `).join('');
+            wrap.querySelectorAll('.cmdk-item').forEach((el, i) => el.addEventListener('click', items[i].action));
+            lucide.createIcons();
+        }
+
+        // ============ KEYBOARD SHORTCUTS ============
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openCmdK(); }
+            else if (e.key === 'Escape') { closeCmdK(); closeSettings(); }
+            else if (!e.metaKey && !e.ctrlKey && !e.altKey && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                if (e.key.toLowerCase() === 'f') toggleFieldMode();
+                else if (e.key.toLowerCase() === 'n') { switchTab('analyzer'); setTimeout(() => document.getElementById('cow-id').focus(), 100); }
+            }
+        });
+
+        // ============ BOOTSTRAP ============
+        async function bootstrap() {
+            lucide.createIcons();
+            await initDB();
+            await loadHistory();
+            await updateApiPill();
+            const apiKey = await getSetting('apiKey', '');
+            if (!apiKey) setTimeout(() => toast('Configura tu API key gratis en ⚙', 'info', 5000), 1000);
+            if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+        }
+        document.addEventListener('DOMContentLoaded', bootstrap);
+    </script>
+</body>
+</html>

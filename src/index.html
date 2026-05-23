@@ -2,12 +2,121 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0; url=v7.5.html">
-    <link rel="canonical" href="v7.5.html">
-    <title>BovinoCheck Pro — cargando…</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0f">
+    <title>BovinoCheck — elige versión</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..900&family=Geist+Mono:wght@400..700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Geist', system-ui, sans-serif; box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        body {
+            min-height: 100vh; background: #0a0a0f; color: #e2e8f0;
+            display: flex; align-items: center; justify-content: center;
+            padding: 2rem; overflow-x: hidden;
+        }
+        body::before {
+            content: ""; position: fixed; inset: 0; z-index: -1;
+            background:
+                radial-gradient(at 20% 30%, rgba(16,185,129,0.18) 0%, transparent 50%),
+                radial-gradient(at 80% 20%, rgba(6,182,212,0.14) 0%, transparent 50%),
+                radial-gradient(at 50% 90%, rgba(139,92,246,0.10) 0%, transparent 50%);
+            animation: pulse 20s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        .container { max-width: 960px; width: 100%; }
+        h1 {
+            font-size: clamp(2rem, 5vw, 3rem); font-weight: 900; letter-spacing: -0.02em; margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #10b981, #06b6d4);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .sub { color: #94a3b8; margin-bottom: 3rem; font-size: 0.95rem; }
+        .mono { font-family: 'Geist Mono', monospace; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+        @media (min-width: 720px) { .grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; } }
+        .card {
+            background: rgba(15,23,42,0.5);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 1.5rem; padding: 2rem;
+            text-decoration: none; color: inherit;
+            transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+            display: flex; flex-direction: column; gap: 1rem;
+            position: relative; overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(16,185,129,0.4);
+            box-shadow: 0 12px 40px rgba(16,185,129,0.2);
+        }
+        .card .badge {
+            display: inline-block; font-size: 0.65rem; font-weight: 700;
+            letter-spacing: 0.15em; text-transform: uppercase; padding: 0.25rem 0.6rem;
+            border-radius: 0.5rem; align-self: flex-start;
+        }
+        .card.v7 .badge { background: rgba(148,163,184,0.15); color: #94a3b8; }
+        .card.v8 .badge { background: linear-gradient(135deg, #10b981, #06b6d4); color: #0a0a0f; }
+        .card h2 { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.02em; }
+        .card p { color: #94a3b8; font-size: 0.85rem; line-height: 1.5; }
+        .card ul { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+        .card li { font-size: 0.75rem; color: #cbd5e1; display: flex; gap: 0.5rem; }
+        .card li::before { content: "›"; color: #10b981; font-weight: bold; }
+        .card .cta {
+            margin-top: auto; padding: 0.75rem 1rem; border-radius: 0.75rem;
+            background: rgba(255,255,255,0.05); text-align: center;
+            font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+        }
+        .card.v8 .cta {
+            background: linear-gradient(135deg, #10b981, #059669); color: #0a0a0f;
+        }
+        .card.v8::after {
+            content: ""; position: absolute; top: -50%; right: -50%;
+            width: 100%; height: 100%; background: radial-gradient(circle, rgba(16,185,129,0.2) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .footer { margin-top: 3rem; text-align: center; color: #64748b; font-size: 0.7rem; }
+        .footer a { color: #10b981; text-decoration: none; }
+    </style>
 </head>
 <body>
-    <p>Redirigiendo a <a href="v7.5.html">BovinoCheck Pro V7.5</a>…</p>
-    <script>location.replace('v7.5.html' + location.search);</script>
+    <div class="container">
+        <h1>BovinoCheck AI</h1>
+        <p class="sub mono">Evaluación de cojera bovina · UTMACH · El Oro Ecuador · elige versión</p>
+
+        <div class="grid">
+            <a href="v7.5.html" class="card v7">
+                <span class="badge">v7.5 · stable</span>
+                <h2>Polish edition</h2>
+                <p>Versión refinada del prototipo original. Misma estética de los alumnos + IndexedDB + bug fixes + PWA + escalas duales.</p>
+                <ul>
+                    <li>IndexedDB persistente</li>
+                    <li>API config + test connection</li>
+                    <li>Sprecher ↔ Welfare Quality</li>
+                    <li>Timeline + tendencia por vaca</li>
+                    <li>PDF reports individuales y de hato</li>
+                </ul>
+                <div class="cta">Abrir V7.5 →</div>
+            </a>
+
+            <a href="v8.0.html" class="card v8">
+                <span class="badge">v8.0 · next-gen</span>
+                <h2>Agentic edition</h2>
+                <p>Rediseño completo. Glassmorphism dark + sidebar de agentes IA en vivo + command palette ⌘K + voz + modo campo high-contrast.</p>
+                <ul>
+                    <li>4 agentes IA con timeline streaming</li>
+                    <li>Command palette ⌘K + atajos</li>
+                    <li>Comando de voz para arete</li>
+                    <li>Modo campo (botones gigantes, alto contraste)</li>
+                    <li>Geist font + glass + animaciones</li>
+                </ul>
+                <div class="cta">Abrir V8.0 →</div>
+            </a>
+        </div>
+
+        <p class="footer mono">
+            Source: <a href="https://github.com/andreerogel1997-bit/bovinocheck" target="_blank">github.com/andreerogel1997-bit/bovinocheck</a>
+            · MIT License · UTMACH 2026
+        </p>
+    </div>
 </body>
 </html>
