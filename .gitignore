@@ -1,0 +1,36 @@
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Build / Android
+android/.bubblewrap/
+android/*.keystore
+android/*.aab
+android/*.apk
+android/app/
+android/build/
+android/twa-manifest.json
+android/store_icon.png
+
+# Logs
+*.log
+npm-debug.log*
+
+# Env
+.env
+.env.local
+secrets/
+
+# Research raw data (5MB de JSON, no necesario en repo)
+research/raw/
+
+# macOS metadata Google Drive
+.tmp.drivedownload/
+.tmp.driveupload/
