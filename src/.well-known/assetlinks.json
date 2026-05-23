@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "ec.utmach.bovinocheck",
+        "sha256_cert_fingerprints": ["72:C4:7D:3F:E0:63:8D:0C:EA:02:E6:4D:F1:23:07:CA:B9:D2:94:E6:24:BD:6C:96:C1:87:EF:45:72:64:92:2C"]
+      }
+    }]

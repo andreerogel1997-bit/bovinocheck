@@ -9,15 +9,23 @@ Thumbs.db
 .idea/
 *.sublime-*
 
-# Build / Android
+# Build / Android — CRÍTICO: nada que pueda contener keys o passwords
 android/.bubblewrap/
-android/*.keystore
-android/*.aab
-android/*.apk
-android/app/
 android/build/
-android/twa-manifest.json
+android/app/
 android/store_icon.png
+android/pwabuilder_package/
+android/*.zip
+**/*.keystore
+**/*.jks
+**/*.aab
+**/*.apk
+**/.keystore_password
+**/keystore_password*
+**/keystore_credentials*
+**/signing-key-info*
+**/google-services.json
+**/key.properties
 
 # Logs
 *.log

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0f">
+    <title>Política de Privacidad — BovinoCheck AI Pro</title>
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400..900&family=Geist+Mono:wght@400..700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        * { font-family: 'Geist', system-ui, sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #0a0a0f; color: #e2e8f0; min-height: 100vh; padding: 2rem 1rem; }
+        body::before {
+            content: ""; position: fixed; inset: 0; z-index: -1;
+            background: radial-gradient(at 20% 30%, rgba(16,185,129,0.10) 0%, transparent 50%),
+                        radial-gradient(at 80% 20%, rgba(6,182,212,0.08) 0%, transparent 50%);
+        }
+        .container {
+            max-width: 760px; margin: 0 auto;
+            background: rgba(15,23,42,0.5);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 1.5rem;
+            padding: 2.5rem 2rem;
+        }
+        nav {
+            max-width: 760px; margin: 0 auto 1.5rem;
+            display: flex; gap: 0.5rem; align-items: center;
+        }
+        nav a {
+            color: #94a3b8; text-decoration: none; font-size: 0.8rem;
+            padding: 0.4rem 0.8rem; border-radius: 0.5rem;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.2s;
+        }
+        nav a:hover { color: #10b981; background: rgba(16,185,129,0.1); }
+        .mono { font-family: 'Geist Mono', monospace; }
+        #content { line-height: 1.65; font-size: 0.95rem; color: #cbd5e1; }
+        #content h1 { font-size: 2rem; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 0.5rem; color: #fff; }
+        #content h1 + p { color: #94a3b8; font-size: 0.85rem; margin-bottom: 2rem; }
+        #content h2 {
+            font-size: 1.25rem; font-weight: 800; letter-spacing: -0.01em;
+            margin-top: 2rem; margin-bottom: 0.8rem; color: #10b981;
+            padding-bottom: 0.4rem; border-bottom: 1px solid rgba(16,185,129,0.2);
+        }
+        #content h3 { font-size: 1rem; font-weight: 700; margin-top: 1.2rem; margin-bottom: 0.5rem; color: #cbd5e1; }
+        #content p { margin: 0.6rem 0; }
+        #content ul, #content ol { margin: 0.6rem 0 0.6rem 1.5rem; }
+        #content li { margin: 0.3rem 0; }
+        #content a { color: #10b981; text-decoration: underline; text-decoration-color: rgba(16,185,129,0.4); text-underline-offset: 3px; }
+        #content a:hover { color: #06b6d4; }
+        #content code, #content .mono { font-family: 'Geist Mono', monospace; background: rgba(255,255,255,0.05); padding: 0.1rem 0.4rem; border-radius: 0.3rem; font-size: 0.85em; color: #06b6d4; }
+        #content blockquote {
+            border-left: 3px solid #fbbf24;
+            background: rgba(251,191,36,0.08);
+            padding: 0.8rem 1rem;
+            margin: 1rem 0;
+            border-radius: 0.5rem;
+            font-style: italic;
+            color: #fde68a;
+        }
+        #content table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }
+        #content th, #content td { padding: 0.6rem 0.8rem; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        #content th { color: #10b981; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.1em; }
+        #content hr { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 2rem 0; }
+        #content strong { color: #fff; }
+        .loading { text-align: center; padding: 3rem; color: #64748b; }
+        footer { max-width: 760px; margin: 1.5rem auto 0; text-align: center; font-size: 0.75rem; color: #64748b; font-family: 'Geist Mono', monospace; }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="./">← App</a>
+        <a href="https://github.com/andreerogel1997-bit/bovinocheck/blob/main/PRIVACY.md" target="_blank">Versión en GitHub</a>
+    </nav>
+    <div class="container">
+        <div id="content"><div class="loading">Cargando política de privacidad…</div></div>
+    </div>
+    <footer>BovinoCheck AI Pro · UTMACH 2026 · MIT</footer>
+    <script>
+        fetch('PRIVACY.md')
+            .then(r => r.text())
+            .then(md => { document.getElementById('content').innerHTML = marked.parse(md); })
+            .catch(e => {
+                document.getElementById('content').innerHTML = `<p style="color:#f43f5e">Error cargando política. <a href="https://github.com/andreerogel1997-bit/bovinocheck/blob/main/PRIVACY.md" style="color:#10b981">Ver en GitHub</a></p>`;
+            });
+    </script>
+</body>
+</html>

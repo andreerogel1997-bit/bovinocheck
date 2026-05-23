@@ -1,0 +1,59 @@
+#!/usr/bin/expect -f
+# Auto-responde el wizard de bubblewrap init
+# Uso: ./bubblewrap_init.exp <manifest-url> <jdk-path>
+
+set timeout 1800
+set manifest_url [lindex $argv 0]
+set jdk_path [lindex $argv 1]
+set keystore_path "/Users/andree/.bovinocheck-credentials/android.keystore"
+
+log_user 1
+
+spawn bubblewrap init --manifest=$manifest_url --directory=.
+
+expect {
+    # JDK: usar la nuestra
+    -re "install the JDK.*\\(Y/n\\)" {
+        send -- "n\r"
+        exp_continue
+    }
+    -re "Path to your existing JDK" {
+        send -- "$jdk_path\r"
+        exp_continue
+    }
+    # Android SDK: que bubblewrap la instale
+    -re "install the Android SDK.*\\(Y/n\\)" {
+        send -- "Y\r"
+        exp_continue
+    }
+    -re "Path to your existing Android SDK" {
+        send -- "\r"
+        exp_continue
+    }
+    # Para cualquier otra pregunta tomar default (Enter)
+    -re "\\? .*\\(.+\\)\\s*$" {
+        send -- "\r"
+        exp_continue
+    }
+    # End of wizard, asking for keystore details
+    -re "(?i)keystore.*path" {
+        send -- "$keystore_path\r"
+        exp_continue
+    }
+    -re "(?i)key.*alias" {
+        send -- "bovinocheck\r"
+        exp_continue
+    }
+    # No vamos a contestar passwords aquí porque el init no debería pedirlas
+    # (el keystore ya existe, solo lee la metadata)
+    eof {
+        puts "\n[bubblewrap_init.exp] EOF reached"
+    }
+    timeout {
+        puts "\n[bubblewrap_init.exp] TIMEOUT"
+        exit 1
+    }
+}
+
+set exit_code [lindex [wait] 3]
+exit $exit_code
